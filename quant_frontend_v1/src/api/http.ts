@@ -45,7 +45,6 @@ export function post (url: string, params: any, headers: any): any {
       headers: headers,
       data: params
     }
-
     request(requestConfig)
       .then((result: unknown) => {
         resolve(result)
