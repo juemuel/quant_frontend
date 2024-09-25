@@ -8,4 +8,5 @@ import Vconsole from "vconsole";
 if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
   const vconsole = new Vconsole();
 }
+
 createApp(App).use(store).use(ElementPlus).use(router).mount('#app')

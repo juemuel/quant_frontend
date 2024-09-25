@@ -1,16 +1,23 @@
 import { createRouter, createWebHashHistory, RouteRecordRaw } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
-
+import LayoutView from '@/Layout/pc/LayoutView.vue'
 const routes: Array<RouteRecordRaw> = [
   {
-    path: '/home',
-    name: 'home',
-    component: HomeView
-  },
-  {
-    path: '/about',
-    name: 'about',
-    component: () => import('../views/AboutView.vue')
+    path: "/",
+    component: LayoutView,
+    children: [
+      { path: "", component: HomeView },
+      {
+        path: '/quant',
+        name: 'quant',
+        component: () => import('../views/Quant/pc/QuantView.vue')
+      },
+      {
+        path: '/user-list',
+        name: 'user-list',
+        component: () => import('../views/System/pc/UserListView.vue')
+      }
+    ]
   },
   {
     path: '/login01',

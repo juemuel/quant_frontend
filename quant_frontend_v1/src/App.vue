@@ -1,22 +1,14 @@
 <template>
   <div id="app">
-    <HeaderToolBar />
-    <AsideBar />
     <router-view />
   </div>
 </template>
 
 <script>
 import { defineComponent } from 'vue'
-import AsideBar from './components/pc/AsideBar.vue'
-import HeaderToolBar from './components/pc/HeaderToolBar.vue'
 
 export default defineComponent({
-  name: 'App',
-  components: {
-    HeaderToolBar,
-    AsideBar
-  }
+  name: 'App'
 })
 </script>
 
@@ -38,5 +30,8 @@ nav {
       color: #42b983;
     }
   }
+}
+.el-sub-menu__title {
+    color: rgb(191, 203, 217) !important;
 }
 </style>

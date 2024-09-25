@@ -5,7 +5,7 @@
       <el-row :gutter="20">
         <el-col :span="6">
           <el-form-item label="请选择指数:">
-            <el-select v-model="data.currentIndex" @click="simulate" placeholder="请选择指数" :loading="data.loading">
+            <el-select v-model="data.currentIndex" placeholder="请选择指数" :loading="data.loading">
               <el-option v-for="item in data.indexes" :key="item.code" :label="`${item.name} - (${item.code})`"
                 :value="item.code" />
             </el-select>
@@ -13,7 +13,7 @@
         </el-col>
         <el-col :span="6">
           <el-form-item label="MA(均线):">
-            <el-select v-model="data.ma" @change="changeParam" @click="simulate" placeholder="请选择均线">
+            <el-select v-model="data.ma" placeholder="请选择均线">
               <el-option label="5日" value="5" />
               <el-option label="10日" value="10" />
               <el-option label="20日" value="20" />
@@ -23,7 +23,7 @@
         </el-col>
         <el-col :span="6">
           <el-form-item label="手续费:">
-            <el-select v-model="data.serviceCharge" @change="changeParam" placeholder="请选择手续费">
+            <el-select v-model="data.serviceCharge" placeholder="请选择手续费">
               <el-option label="无" value="0" />
               <el-option label="0.1%" value="0.001" />
               <el-option label="0.15%" value="0.0015" />
@@ -33,29 +33,37 @@
         </el-col>
         <el-col :span="6">
           <el-form-item label="购买阈值:">
-            <el-select v-model="data.buyThreshold" @change="changeParam" @click="simulate" placeholder="请选择购买阈值">
+            <el-select v-model="data.buyThreshold" placeholder="请选择购买阈值">
               <el-option v-for="i in 9" :key="i" :label="`${i / 100 + 1}`" :value="i / 100 + 1" />
             </el-select>
           </el-form-item>
         </el-col>
         <el-col :span="6">
           <el-form-item label="出售阈值:">
-            <el-select v-model="data.sellThreshold" @change="changeParam" @click="simulate" placeholder="请选择出售阈值">
+            <el-select v-model="data.sellThreshold" placeholder="请选择出售阈值">
               <el-option v-for="i in 10" :key="i" :label="`${1 - i / 100}`" :value="1 - i / 100" />
             </el-select>
           </el-form-item>
         </el-col>
         <el-col :span="6">
           <el-form-item label="开始日期:">
-            <el-date-picker v-model="data.startDate" type="date" placeholder="选择日期" @change="changeParam" />
+            <el-date-picker v-model="data.startDate" format="YYYY-MM-DD" value-format="YYYY-MM-DD" type="date"
+              placeholder="选择日期" />
           </el-form-item>
         </el-col>
         <el-col :span="6">
           <el-form-item label="结束日期:">
-            <el-date-picker v-model="data.endDate" type="date" placeholder="选择日期" @change="changeParam" />
+            <el-date-picker v-model="data.endDate" format="YYYY-MM-DD" value-format="YYYY-MM-DD" type="date"
+              placeholder="选择日期" />
           </el-form-item>
         </el-col>
       </el-row>
+      <el-button size="default" type="primary" @click="onSearch()">
+        <el-icon>
+          <Search />
+        </el-icon>
+        &nbsp;查询
+      </el-button>
     </el-form>
     <!-- 标签页 -->
     <el-tabs v-model="data.activeIncomeTab" @tab-click="handleIncomeClick">
@@ -85,8 +93,9 @@
 
 <script setup>
 import axios from 'axios';
+import DateUtils from '@/utils/DateUtils'
 import { nextTick, ref, onMounted, reactive, onBeforeMount } from 'vue'
-import quantApi from '@/api/v1/quantApi'
+import quantApi from '@/api/Quant/quantApi'
 const data = reactive({
   loading: true,
   ma: 20,
@@ -109,7 +118,7 @@ const data = reactive({
   dates: [],
   indexDatas: [], // api某指数数据
   closePoints: [], // api某指数收盘价
-  flushDate: true,
+  // flushDate: true,
   indexStartDate: null, // api某指数开始日期
   indexEndDate: null, // api某指数结束日期
   // 3. 收益数据
@@ -144,6 +153,8 @@ onMounted(() => {
 })
 const simulate = async () => {
   try {
+    // data.startDate = DateUtils.formatDate(data.startDate, 'yyyy-MM-dd')
+    // data.endDate = DateUtils.formatDate(data.endDate, 'yyyy-MM-dd')
     const str = "/" + data.currentIndex + "/" + data.ma + "/" + data.buyThreshold + "/" + data.sellThreshold + "/" + data.serviceCharge + "/" + data.startDate + "/" + data.endDate + "/"
     const params = {
       url: str
@@ -168,22 +179,19 @@ const fetchIndexes = async () => {
         data.indexes = [...res.data]
         console.log('data.indexes', data.indexes)
         console.log('data.indexes', data.indexes[1].name)
-        nextTick(() => {
-          simulate();
-        });
+        // nextTick(() => {
+        //   simulate();
+        // });
       }
     })
   } catch (error) {
     console.error('Failed to fetch indexes:', error)
   }
 }
-const changeParam = () => {
-  // 更新参数并刷新日期
-  data.flushDate = false;
+const onSearch = () => {
   simulate();
 }
 const changeParamWithFlushDate = (item) => {
-  data.flushDate = true;
   data.startDate = null;
   data.endDate = null;
   simulate();
