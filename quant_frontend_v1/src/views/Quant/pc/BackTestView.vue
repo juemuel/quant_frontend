@@ -1,5 +1,5 @@
 <template>
-  <div id="workingArea">
+  <div id="workingArea" class="page">
     <!-- 回测参数 -->
     <el-form label-width="120px">
       <el-row :gutter="20">
@@ -206,5 +206,8 @@ const handleProfitClick = (tab, event) => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+.page {
+  height: calc(100vh - 45px);
+}
 </style>

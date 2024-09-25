@@ -4,17 +4,23 @@ import LayoutView from '@/Layout/pc/LayoutView.vue'
 const routes: Array<RouteRecordRaw> = [
   {
     path: "/",
+    redirect: '/home',
     component: LayoutView,
     children: [
-      { path: "", component: HomeView },
+      { path: "/home", component: HomeView },
       {
-        path: '/quant',
-        name: 'quant',
-        component: () => import('../views/Quant/pc/QuantView.vue')
+        path: '/recommend',
+        name: 'recommend',
+        component: () => import('../views/Quant/pc/RecommendView.vue')
       },
       {
-        path: '/user-list',
-        name: 'user-list',
+        path: '/backTest',
+        name: 'backTest',
+        component: () => import('../views/Quant/pc/BackTestView.vue')
+      },
+      {
+        path: '/userList',
+        name: 'userList',
         component: () => import('../views/System/pc/UserListView.vue')
       }
     ]

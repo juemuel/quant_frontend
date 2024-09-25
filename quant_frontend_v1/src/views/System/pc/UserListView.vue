@@ -1,5 +1,5 @@
 <template>
-  <div class="user">
+  <div class="page">
     userListView
   </div>
 </template>
@@ -8,4 +8,7 @@
 
 </script>
 <style scoped lang="scss">
+.page {
+  height: calc(100vh - 45px);
+}
 </style>
