@@ -1,30 +1,39 @@
 <template>
-  <el-menu default-active="2" class="el-menu-vertical-demo">
-    <router-link to="/home">
-      <el-menu-item index="1">
-        <i class="el-icon-s-home"></i>首页
-      </el-menu-item>
-    </router-link>
-    <el-sub-menu index="2">
+  <el-menu
+    default-active="/home"
+    class="el-menu-vertical-demo"
+    router
+    unique-opened>
+    <el-menu-item index="/home">
+      <i class="el-icon-s-home"></i>首页
+    </el-menu-item>
+    <el-sub-menu index="/system">
       <template #title>
         <i class="el-icon-user-solid"></i>系统管理
       </template>
-      <router-link to="/userList">
-        <el-menu-item index="2-1">用户列表</el-menu-item>
-      </router-link>
+      <el-menu-item index="/system/userList">用户列表</el-menu-item>
+      <el-menu-item index="/system/roleList">角色列表</el-menu-item>
     </el-sub-menu>
-    <el-sub-menu index="3">
+    <el-sub-menu index="/quant">
       <template #title>
         <i class="el-icon-s-order"></i>量化管理
       </template>
-      <router-link to="/recommend">
-        <el-menu-item index="3-1">推荐系统</el-menu-item>
-      </router-link>
-      <router-link to="/backTest">
-        <el-menu-item index="3-2">回测系统</el-menu-item>
-      </router-link>
+      <el-menu-item index="/quant/recommend">推荐系统</el-menu-item>
+      <el-menu-item index="/quant/backTest">回测系统</el-menu-item>
     </el-sub-menu>
-
+    <el-sub-menu index="/product">
+      <template #title>
+        <i class="el-icon-s-order"></i>产品
+      </template>
+      <el-menu-item index="/product/productList">产品配置</el-menu-item>
+      <el-menu-item index="/product/product">购买产品</el-menu-item>
+    </el-sub-menu>
+    <el-sub-menu index="/order">
+      <template #title>
+        <i class="el-icon-s-order"></i>订单
+      </template>
+      <el-menu-item index="/order/orderList">订单列表</el-menu-item>
+    </el-sub-menu>
   </el-menu>
 </template>
 
@@ -32,57 +41,25 @@
 
 </script>
 <style scoped lang="scss">
-a {
-  text-decoration: none;
-  color: inherit;
-}
-.el-menu-vertical-demo{
-  --el-menu-bg-color: rgb(178, 201, 94)
-}
-
 .el-menu {
   border: none;
-  background-color: #233142;
+  background-color: #333 !important;
   color: rgb(191, 203, 217) !important;
 }
-.el-sub-menu__title{
+::v-deep .el-sub-menu__title:hover{
+  background-color: #333 !important;
+}
+.el-menu-item {
+  background-color: #333  !important;
   color: rgb(191, 203, 217) !important;
 }
-.el-menu-item:hover,
-.el-sub-menu__title:hover {
-  background-color: #304055;
-    color: #ffffff;
+.el-menu-item:hover{
+  outline: 0 !important;
+  color: #409EFF !important;
+  background: #333 !important;
 }
-.el-menu-item.is-active,
-.el-sub-menu__title.is-active {
-  background-color: #304055;
-  color: #ffffff;
-}
-.el-menu-item,
-.el-sub-menu__title {
-  height: 45px;
-  line-height: 45px;
-  font-size: 14px;
-  background-color: #233142;
-  color: rgb(191, 203, 217) ;
-  padding: 0 20px;
-  list-style: none;
-  cursor: pointer;
-  position: relative;
-  text-align: left;
-}
-.el-menu-item:focus,
-.el-menu-item:hover,
-.el-sub-menu__title:focus,
-.el-sub-menu__title:hover {
-  background-color: #304055;
-  color: #ffffff;
-}
-
-.el-menu-item:focus i,
-.el-menu-item:hover i,
-.el-sub-menu__title:focus i,
-.el-sub-menu__title:hover i {
-  color: #ffffff;
+.el-menu-item.is-active {
+  color: #fff !important;
+  background: #409EFF !important;
 }
 </style>

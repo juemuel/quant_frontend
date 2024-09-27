@@ -1,6 +1,6 @@
 <template>
   <div class="page">
-    roleListView
+    角色列表
   </div>
 </template>
 

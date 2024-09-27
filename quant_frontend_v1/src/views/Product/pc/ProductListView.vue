@@ -1,6 +1,6 @@
 <template>
   <div class="page">
-    推荐页面
+    商品列表配置页面
   </div>
 </template>
 

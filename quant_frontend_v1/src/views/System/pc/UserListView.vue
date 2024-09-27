@@ -1,6 +1,6 @@
 <template>
   <div class="page">
-    userListView
+    用户列表
   </div>
 </template>
 

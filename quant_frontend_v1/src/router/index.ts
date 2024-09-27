@@ -3,25 +3,65 @@ import HomeView from '../views/HomeView.vue'
 import LayoutView from '@/Layout/pc/LayoutView.vue'
 const routes: Array<RouteRecordRaw> = [
   {
-    path: "/",
-    redirect: '/home',
+    path: '/',
     component: LayoutView,
     children: [
-      { path: "/home", component: HomeView },
+      { path: '', redirect: '/home' },
+      { path: '/home', component: HomeView },
       {
-        path: '/recommend',
-        name: 'recommend',
-        component: () => import('../views/Quant/pc/RecommendView.vue')
+        path: '/quant',
+        children: [
+          {
+            path: 'recommend',
+            name: 'recommend',
+            component: () => import('../views/Quant/pc/RecommendView.vue')
+          },
+          {
+            path: 'backTest',
+            name: 'backTest',
+            component: () => import('../views/Quant/pc/BackTestView.vue')
+          }
+        ]
       },
       {
-        path: '/backTest',
-        name: 'backTest',
-        component: () => import('../views/Quant/pc/BackTestView.vue')
+        path: '/system',
+        children: [
+          {
+            path: 'userList',
+            name: 'userList',
+            component: () => import('../views/System/pc/UserListView.vue')
+          },
+          {
+            path: 'roleList',
+            name: 'roleList',
+            component: () => import('../views/System/pc/RoleListView.vue')
+          }
+        ]
       },
       {
-        path: '/userList',
-        name: 'userList',
-        component: () => import('../views/System/pc/UserListView.vue')
+        path: '/product',
+        children: [
+          {
+            path: 'productList',
+            name: 'productList',
+            component: () => import('../views/Product/pc/ProductListView.vue')
+          },
+          {
+            path: 'product',
+            name: 'product',
+            component: () => import('../views/Product/pc/ProductView.vue')
+          }
+        ]
+      },
+      {
+        path: '/order',
+        children: [
+          {
+            path: 'orderList',
+            name: 'orderList',
+            component: () => import('../views/Order/pc/OrderListView.vue')
+          }
+        ]
       }
     ]
   },
