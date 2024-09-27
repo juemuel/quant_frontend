@@ -1,19 +1,73 @@
 <template>
   <div class="page">
-    <img alt="Vue logo" src="../assets/logo.png">
+    <div class="dashboard-editor-container">
+      <panel-group @handleSetLineChartData="handleSetLineChartData" />
+      <el-row style="chart-box">
+        <line-chart :chart-data="lineChartData" />
+      </el-row>
+    </div>
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue'
+<script setup>
+import { ref } from 'vue';
+import PanelGroup from '@/components/pc/PanelGroup.vue';
+import LineChart from '@/components/pc/LineChart.vue'
 
-export default defineComponent({
-  name: 'HomeView'
-})
+// 定义折线图数据
+const lineChartData = ref({
+  newVisitis: {
+    expectedData: [100, 120, 161, 134, 105, 160, 165],
+    actualData: [120, 82, 91, 154, 162, 140, 145]
+  },
+  messages: {
+    expectedData: [200, 192, 120, 144, 160, 130, 140],
+    actualData: [180, 160, 151, 106, 145, 150, 130]
+  },
+  purchases: {
+    expectedData: [80, 100, 121, 104, 105, 90, 100],
+    actualData: [120, 90, 100, 138, 142, 130, 130]
+  },
+  shoppings: {
+    expectedData: [130, 140, 141, 142, 145, 150, 160],
+    actualData: [120, 82, 91, 154, 162, 140, 130]
+  }
+});
+
+// 初始化时设置默认数据
+lineChartData.value = lineChartData.value.newVisitis;
+
+const handleSetLineChartData = (type) => {
+  lineChartData.value = lineChartData.value[type];
+};
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .page {
   height: calc(100vh - 45px);
+  width: 100%;
+  overflow: hidden;
+}
+.dashboard-editor-container {
+  padding: 32px;
+  background-color: rgb(240, 242, 245);
+  position: relative;
+}
+.dashboard-editor-container .github-corner {
+  position: absolute;
+  top: 0px;
+  border: 0;
+  right: 0;
+}
+
+.dashboard-editor-container .chart-wrapper {
+  background: #fff;
+  padding: 16px 16px 0;
+  margin-bottom: 32px;
+}
+.chart-box {
+  background: #fff;
+  padding: 16px 16px 0;
+  margin-bottom: 32px;
 }
 </style>

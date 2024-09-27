@@ -14,7 +14,6 @@
     </el-container>
   </div>
 </template>
-
 <script>
 import HeaderComponent from "./HeaderComponent.vue";
 import SideBarComponent from "./SideBarComponent.vue";
