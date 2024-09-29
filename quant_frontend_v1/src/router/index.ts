@@ -47,6 +47,11 @@ const routes: Array<RouteRecordRaw> = [
             component: () => import('../views/Product/pc/ProductListView.vue')
           },
           {
+            path: 'discountList',
+            name: 'discountList',
+            component: () => import('../views/Product/pc/DiscountListView.vue')
+          },
+          {
             path: 'product',
             name: 'product',
             component: () => import('../views/Product/pc/ProductView.vue')

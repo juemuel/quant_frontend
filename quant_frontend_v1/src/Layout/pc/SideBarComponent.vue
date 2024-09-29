@@ -1,44 +1,109 @@
 <template>
   <el-menu
-    default-active="/home"
+    :default-active="data.activeIndex"
+    :default-opened="data.openedIndex"
     class="el-menu-vertical-demo"
     router
-    unique-opened>
+    @select="handleSelect"
+    >
     <el-menu-item index="/home">
-      <i class="el-icon-s-home"></i>首页
+      <Icon :icon="data.menuList[0].icon" :width="20" :height="20" />
+      &nbsp;&nbsp;{{ data.menuList[0].name }}
     </el-menu-item>
-    <el-sub-menu index="/system">
+    <el-sub-menu
+      v-for="(subItem) in data.menuList.slice(1)"
+      :key="subItem.index"
+      :index="subItem.index"
+    >
       <template #title>
-        <i class="el-icon-user-solid"></i>系统管理
+        <Icon :icon="subItem.icon" :width="20" :height="20" />
+         &nbsp;&nbsp;{{ subItem.name }}
       </template>
-      <el-menu-item index="/system/userList">用户列表</el-menu-item>
-      <el-menu-item index="/system/roleList">角色列表</el-menu-item>
-    </el-sub-menu>
-    <el-sub-menu index="/quant">
-      <template #title>
-        <i class="el-icon-s-order"></i>量化管理
-      </template>
-      <el-menu-item index="/quant/recommend">推荐系统</el-menu-item>
-      <el-menu-item index="/quant/backTest">回测系统</el-menu-item>
-    </el-sub-menu>
-    <el-sub-menu index="/product">
-      <template #title>
-        <i class="el-icon-s-order"></i>产品
-      </template>
-      <el-menu-item index="/product/productList">产品配置</el-menu-item>
-      <el-menu-item index="/product/product">购买产品</el-menu-item>
-    </el-sub-menu>
-    <el-sub-menu index="/order">
-      <template #title>
-        <i class="el-icon-s-order"></i>订单
-      </template>
-      <el-menu-item index="/order/orderList">订单列表</el-menu-item>
+      <el-menu-item
+        v-for="(menuItem) in subItem.children"
+        :key="menuItem.index"
+        :index="menuItem.index"
+      >
+        <Icon :icon="menuItem.icon" :width="20" :height="20" />
+         &nbsp;&nbsp;{{ menuItem.name }}
+      </el-menu-item>
     </el-sub-menu>
   </el-menu>
 </template>
 
 <script setup lang="ts">
-
+import { ref, reactive, onMounted } from 'vue'
+import { useStore } from 'vuex';
+import Icon from '@/components/IconifyIcon.vue'
+const data = reactive({
+  activeIndex: '/home',
+  openedIndex: ['/home'],
+  menuList: [{
+    index: '/home',
+    name: '首页',
+    icon: 'ep:home-filled'
+  },
+  {
+    index: '/system',
+    name: '系统管理',
+    icon: 'ep:platform',
+    children: [
+      { index: '/system/userList', name: '用户列表', icon: 'ep:user' },
+      { index: '/system/roleList', name: '角色列表', icon: 'ep:open' }
+    ]
+  },
+  {
+    index: '/quant',
+    name: '量化系统',
+    icon: 'ep:trend-charts',
+    children: [
+      { index: '/quant/recommend', name: '推荐系统', icon: 'ep:pointer' },
+      { index: '/quant/backTest', name: '回测系统', icon: 'ep:data-line' }
+    ]
+  },
+  {
+    index: '/product',
+    name: '商品系统',
+    icon: 'ep:shop',
+    children: [
+      { index: '/product/productList', name: '产品列表', icon: 'ep:goods' },
+      { index: '/product/discountList', name: '优惠活动', icon: 'ep:present' },
+      { index: '/product/product', name: '购买产品', icon: 'ep:shopping-cart-full' }
+    ]
+  },
+  {
+    index: '/order',
+    name: '订单',
+    icon: 'ep:list',
+    children: [
+      { index: '/order/orderList', name: '订单列表', icon: 'ep:tickets' }
+    ]
+  }]
+})
+const store = useStore();
+onMounted(() => {
+  data.activeIndex = localStorage.getItem("sideBarDefaultActive") || "";
+  data.openedIndex = (JSON.parse(localStorage.getItem("sideBarDefaultOpened") || "[]")) as string[]
+})
+/**
+ * 菜单栏点击事件
+ * @param index 路径（从父路径到子路径名）
+ * @param path 一般是二个字符串构成的路径数组，父路径名，和子路径名
+ */
+function handleSelect (index: string, path: string[]) {
+  console.log('select', index, path)
+  const params = {
+    index,
+    path
+  };
+  store.commit('sidebarModule/set_sidebar_active', params);
+  const navName = data.menuList.filter((item) => item.index === index);
+  if (navName.length > 0) {
+    store.commit('sidebarModule/set_nav_name', navName[0].name); // 调用 NAV_NAME 这个 mutation
+  } else {
+    store.commit('sidebarModule/set_nav_name', '');
+  }
+}
 </script>
 <style scoped lang="scss">
 .el-menu {
