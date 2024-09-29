@@ -3,7 +3,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, watchDeep, onActivated, onDeactivated, defineProps, nextTick } from 'vue';
+import { ref, onMounted, onBeforeUnmount, watch, onActivated, onDeactivated, defineProps, nextTick } from 'vue';
 import * as echarts from 'echarts'; // 引入 echarts
 require('echarts/theme/macarons'); // 使用 echarts 的 macarons 主题
 
@@ -36,7 +36,7 @@ const chartRef = ref(null);
 const chart = ref(null);
 
 // 监听 chartData 变化
-watchDeep(() => props.chartData, val => {
+watch(() => props.chartData, val => {
   setOptions(val);
 });
 
@@ -82,12 +82,10 @@ const setOptions = ({ expectedData, actualData } = {}) => {
       {
         name: '期望',
         itemStyle: {
-          normal: {
+          color: '#FF005A',
+          lineStyle: {
             color: '#FF005A',
-            lineStyle: {
-              color: '#FF005A',
-              width: 2
-            }
+            width: 2
           }
         },
         smooth: true,
@@ -101,15 +99,13 @@ const setOptions = ({ expectedData, actualData } = {}) => {
         smooth: true,
         type: 'line',
         itemStyle: {
-          normal: {
+          color: '#3888fa',
+          lineStyle: {
             color: '#3888fa',
-            lineStyle: {
-              color: '#3888fa',
-              width: 2
-            },
-            areaStyle: {
-              color: '#f3f8ff'
-            }
+            width: 2
+          },
+          areaStyle: {
+            color: '#f3f8ff'
           }
         },
         data: actualData,

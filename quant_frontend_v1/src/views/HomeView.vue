@@ -1,9 +1,9 @@
 <template>
   <div class="page">
     <div class="dashboard-editor-container">
-      <panel-group @handleSetLineChartData="handleSetLineChartData" />
+      <PanelGroup @handleSetLineChartData="handleSetLineChartData" />
       <el-row style="chart-box">
-        <line-chart :chart-data="lineChartData" />
+        <LineChart :chart-data="lineChartData" />
       </el-row>
     </div>
   </div>
@@ -13,9 +13,7 @@
 import { ref } from 'vue';
 import PanelGroup from '@/components/pc/PanelGroup.vue';
 import LineChart from '@/components/pc/LineChart.vue'
-
-// 定义折线图数据
-const lineChartData = ref({
+const lineChartList = ref({
   newVisitis: {
     expectedData: [100, 120, 161, 134, 105, 160, 165],
     actualData: [120, 82, 91, 154, 162, 140, 145]
@@ -33,12 +31,10 @@ const lineChartData = ref({
     actualData: [120, 82, 91, 154, 162, 140, 130]
   }
 });
-
-// 初始化时设置默认数据
-lineChartData.value = lineChartData.value.newVisitis;
-
+const lineChartData = ref(null)
+lineChartData.value = lineChartList.value.newVisitis;
 const handleSetLineChartData = (type) => {
-  lineChartData.value = lineChartData.value[type];
+  lineChartData.value = lineChartList.value[type];
 };
 </script>
 
