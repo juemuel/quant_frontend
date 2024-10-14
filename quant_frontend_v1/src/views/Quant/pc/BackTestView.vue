@@ -11,12 +11,13 @@
             </el-form-item>
           </el-col>
           <el-col :xs="24" :sm="12" :md="8" :lg="6" :xl="6">
-            <el-form-item label="MA(均线):">
-              <el-select v-model="data.ma" placeholder="请选择均线">
+            <el-form-item label="策略MA(均线):">
+              <el-select v-model="data.ma" placeholder="请选择策略均线">
                 <el-option label="5日" value="5" />
                 <el-option label="10日" value="10" />
                 <el-option label="20日" value="20" />
-                <el-option label="60日" value="60" />
+                <el-option label="50日" value="60" />
+                <el-option label="100日" value="100" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -64,116 +65,130 @@
       </el-form>
       <!-- 标签页 -->
       <el-tabs v-model="data.activeIncomeTab" @tab-click="handleIncomeClick">
-        <el-tab-pane label="收益小结" name="first">
-          <!-- 收益小结表格 -->
+        <el-tab-pane label="收益小结√" name="first">
+          <el-table :data="data.incomeStastics" :loading="data.isSimulateLoading" :key="Math.random()" stripe style="width: 100%">
+            <el-table-column prop="title" label="投资类型"  align="center"></el-table-column>
+            <el-table-column prop="years" label="投资时长 (年)" align="center">
+            </el-table-column>
+            <el-table-column prop="incomeTotal" label="1000元投资收益" align="center">
+              <template #default="scope">
+                {{ ((scope.row.incomeTotal+1) * 1000).toFixed(2) }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="incomeTotal" label="总收益率" align="center">
+              <template #default="scope">
+                {{ (scope.row.incomeTotal * 100).toFixed(2)}}%
+              </template>
+            </el-table-column>
+            <el-table-column prop="incomeAnnual" label="年化收益率" align="center">
+              <template #default="scope">
+                {{ (scope.row.incomeAnnual * 100).toFixed(2)}}%
+              </template>
+            </el-table-column>
+          </el-table>
         </el-tab-pane>
-        <el-tab-pane label="收益折线图" name="second">
-          <!-- 收益折线图 -->
+        <el-tab-pane label="收益折线图√" name="second">
+          <div ref="profitLineChartRef" style="height: 400px;width: 100%;"></div>
         </el-tab-pane>
-        <el-tab-pane label="收益年分布图" name="third">
-          <!-- 收益年分布图 -->
+        <el-tab-pane label="收益年分布图√" name="third">
+          <div ref="annualIncomeChartRef" style="height: 400px;width: 100%;"></div>
         </el-tab-pane>
-        <el-tab-pane label="收益年分布表" name="forth">
-          <div class="label label-warning">收益年分布表</div>
-          <table class="table table-striped table-bordered table-condensed">
-            <thead>
-              <th>年份</th>
-              <th>指数收益</th>
-              <th>趋势投资收益</th>
-            </thead>
-            <tbody>
-              <!-- <tr v-for="bean in data.annualProfits">
-                <td>
-                  {{ bean.year }}
-                </td>
-                <td>
-                  {{ (bean.indexIncome * 100).toFixed(2)}}%
-                </td>
-                <td>
-                  {{ (bean.trendIncome * 100).toFixed(2)}}%
-                </td>
-              </tr> -->
-            </tbody>
-          </table>
+        <el-tab-pane label="收益年分布表√" name="forth">
+          <el-table :data="data.annualProfits" :loading="data.isSimulateLoading" :key="Math.random()" stripe style="width: 100%">
+            <el-table-column prop="year" label="年份" align="center"></el-table-column>
+            <el-table-column label="指数收益" align="center">
+              <template #default="scope">
+                <span :class="scope.row.indexIncome > 0 ? 'label-red' : 'label-green'">
+                  {{ (scope.row.indexIncome * 100).toFixed(2) }}%
+                </span>
+              </template>
+            </el-table-column>
+            <el-table-column label="趋势投资收益" align="center">
+              <template #default="scope">
+                <span :class="scope.row.trendIncome > 0 ? 'label-red' : 'label-green'">
+                  {{ (scope.row.trendIncome * 100).toFixed(2) }}%
+                </span>
+              </template>
+            </el-table-column>
+          </el-table>
         </el-tab-pane>
       </el-tabs>
       <el-tabs v-model="data.activeProfitTab" @tab-click="handleProfitClick">
-        <el-tab-pane label="策略交易统计" name="first">
-          <el-table :data="data.tradeStastics" stripe style="width: 100%">
-            <el-table-column prop="totalTradeCount" label="总交易次数" width="200" align="center"></el-table-column>
-            <el-table-column prop="winCount" label="盈利交易次数" width="200" align="center"></el-table-column>
-            <el-table-column prop="avgWinRate" label="平均盈利比率" width="200" align="center">
+        <el-tab-pane label="策略交易统计√" name="first">
+          <el-table :data="data.tradeStastics" :loading="data.isSimulateLoading" :key="Math.random()" stripe style="width: 100%">
+            <el-table-column prop="totalTradeCount" label="总交易次数" align="center"></el-table-column>
+            <el-table-column prop="winCount" label="盈利交易次数" align="center"></el-table-column>
+            <el-table-column prop="avgWinRate" label="平均盈利比率" align="center">
               <template #default="scope">
                 {{ (scope.row.avgWinRate * 100).toFixed(2)}}%
               </template>
             </el-table-column>
-            <el-table-column prop="lossCount" label="亏损交易次数" width="200" align="center">
+            <el-table-column prop="lossCount" label="亏损交易次数" align="center">
             </el-table-column>
-            <el-table-column prop="avgLossRate" label="平均亏损比率" width="200" align="center">
+            <el-table-column prop="avgLossRate" label="平均亏损比率" align="center">
               <template #default="scope">
                 {{ (scope.row.avgLossRate * 100).toFixed(2)}}%
               </template>
             </el-table-column>
-            <el-table-column prop="winRate" label="胜率" width="200" align="center">
+            <el-table-column prop="winRate" label="胜率" align="center">
               <template #default="scope">
                 {{ scope.row.winRate}}%
               </template>
             </el-table-column>
           </el-table>
         </el-tab-pane>
-        <el-tab-pane label="交易明细表" name="second">
-          <table class="table table-striped table-bordered table-condensed table-hover">
-            <!-- <thead>
-              <th>盈/亏</th>
-              <th>购买日期</th>
-              <th>购买盘点</th>
-              <th>出售日期</th>
-              <th>出售盘点</th>
-              <th>盈亏比率</th>
-              <th>1000元投资收益</th>
-            </thead>
-            <tbody>
-              <tr v-for="bean in data.trades">
-                <td>
-                  <span v-if="bean.sellClosePoint > bean.buyClosePoint" class="label label-danger">盈利</span>
-                  <span v-if="bean.sellClosePoint <= bean.buyClosePoint" class="label label-success">亏损</span>
-                </td>
-                <td>{{ bean.buyDate }}</td>
-                <td>{{ bean.buyClosePoint }}</td>
-                <td>{{ bean.sellDate }}</td>
-                <td>
-                  <span v-if="bean.sellClosePoint == 0">n/a</span>
-                  <span v-if="bean.sellClosePoint != 0">{{ bean.sellClosePoint }}</span>
-                </td>
-                <td>
-                  <span v-if="bean.sellClosePoint == 0">n/a</span>
-                  <span class="label"
-                    v-bind:class="{ 'label-danger': bean.sellClosePoint > bean.buyClosePoint, 'label-success': bean.sellClosePoint <= bean.buyClosePoint }"
-                    v-if="bean.sellClosePoint != 0">{{ (bean.sellClosePoint - bean.buyClosePoint) * 100 / bean.buyClosePoint |
-          formatNumberFilter(2) }}%</span>
-                </td>
-                <td>
-                  <span v-if="bean.sellClosePoint == 0">n/a</span>
-                  <span v-if="bean.sellClosePoint != 0">{{ bean.rate * 1000 | formatMoneyFilter }}</span>
-                </td>
-              </tr>
-            </tbody> -->
-          </table>
+        <el-tab-pane label="交易明细表√" name="second">
+          <el-table :data="data.trades" :loading="data.isSimulateLoading" :key="Math.random()"  stripe style="width: 100%">
+            <el-table-column label="盈/亏" align="center">
+              <template #default="scope">
+                <span v-if="scope.row.sellClosePoint > scope.row.buyClosePoint" class="label  label-red">盈利</span>
+                <span v-else class="label label-green">亏损</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="buyDate" label="购买日期" align="center"></el-table-column>
+            <el-table-column prop="buyClosePoint" label="购买盘点" align="center"></el-table-column>
+            <el-table-column prop="sellDate" label="出售日期" align="center"></el-table-column>
+            <el-table-column label="出售盘点" align="center">
+              <template #default="scope">
+                <span v-if="scope.row.sellClosePoint === 0">n/a</span>
+                <span v-else>{{ scope.row.sellClosePoint }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="盈亏比率" align="center">
+              <template #default="scope">
+                <span v-if="scope.row.sellClosePoint === 0">n/a</span>
+                <span class="label"
+                  :class="{ ' label-red': scope.row.sellClosePoint > scope.row.buyClosePoint, 'label-green': scope.row.sellClosePoint <= scope.row.buyClosePoint }"
+                  v-else>{{ ((scope.row.sellClosePoint - scope.row.buyClosePoint) * 100 / scope.row.buyClosePoint).toFixed(2)}}%</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="1000元投资收益" align="center">
+              <template #default="scope">
+                <span v-if="scope.row.sellClosePoint === 0">n/a</span>
+                <span v-else>{{ (scope.row.rate * 1000).toFixed(2) }}</span>
+              </template>
+            </el-table-column>
+          </el-table>
         </el-tab-pane>
       </el-tabs>
     </el-card>
-    <!-- 回测参数 -->
-
   </div>
 </template>
 
 <script setup>
 import axios from 'axios';
 import DateUtils from '@/utils/DateUtils'
-import { nextTick, ref, onMounted, reactive, onBeforeMount } from 'vue'
+import { nextTick, ref, onMounted, reactive, onUnmounted } from 'vue'
+import * as echarts from 'echarts';
 import quantApi from '@/api/Quant/quantApi'
+const profitLineChartRef = ref(null);
+const annualIncomeChartRef = ref(null);
 const data = reactive({
+  initialScale: 600,
+  largestScale: 1300,
+  resizeTimeout: null,
   loading: true,
+  isSimulateLoading: true,
   activeIncomeTab: 'first',
   activeProfitTab: 'first',
   // 1. 配置项
@@ -188,8 +203,6 @@ const data = reactive({
     name: '趋势投资'
   }],
   currentIndex: '000300', // 表单-选中的指数
-  indexStartDate: null, // 当前指数的开始日期
-  indexEndDate: null, // 当前指数的结束日期
   ma: 20, // 表单-均线
   serviceCharge: 0.0, // 表单-手续费
   buyThreshold: 1.01, // 表单-购买阈值
@@ -200,7 +213,8 @@ const data = reactive({
   indexDatas: [], // api某指数数据（对应的date日期、closePoints收盘价）
   maDatas: [], // api某指数均线数据
   profits: [], // api指数本身的日收益数据
-  years: 0, // 持续年时长
+  indexStartDate: null, // 当前指数的开始日期
+  indexEndDate: null, // 当前指数的结束日期
   dates: [], // 计算的日期数组
   closePoints: [], // 计算的指数收盘价
   profitValues: [], // 计算的指数本身日收益数组（用于图表显示）
@@ -212,36 +226,265 @@ const data = reactive({
     lossCount: 0, // 亏损次数
     avgWinRate: 0, // 平均盈利比率
     avgLossRate: 0, // 平均亏损比率
-    totalTradeCount: 0, // 总交易次数：winCount+lossCount
-    winRate: 0 // 胜率：((winCount/(winCount+lossCount))*100).toFixed(2)
+    totalTradeCount: 0, // 计算的总交易次数：winCount+lossCount
+    winRate: 0 // 计算的胜率：((winCount/(winCount+lossCount))*100).toFixed(2)
   }],
   // 4. 收益数据（1个api数组，4个api字段，4计算）
+  years: 0, // 投资持续年时长
   annualProfits: [], // api多类目年收益数组（年份year、指数收益indexIncome、趋势投资收益trendIncome）
   incomeStastics: [{
-    indexIncomeTotal: 0, // api指数收益率数值
-    indexIncomeAnnual: 0, // api指数年化收益率
-    trendIncomeTotal: 0, // api趋势投资收益率数值
-    trendIncomeAnnual: 0 // api趋势投资年化收益率
+    title: '',
+    years: '',
+    incomeTotal: 0,
+    incomeAnnual: 0
   }],
   annuals: [], // 计算的年份数组
   indexIncomes: [], // 计算的年指数收益数组
   trendIncomes: [] // 计算的年趋势收益数组收益数组
 })
-// let chart4Profit = null;
-// let chart4AnnualIncome = null;
-// onBeforeMount(() => {
-// })
+
 onMounted(() => {
   initData()
+  nextTick(() => {
+    initGraph();
+  });
 })
 async function initData () {
   try {
-    await fetchIndexes();
-    onSearch();
+    const fetchIndexesRes = await fetchIndexes()
+    if (fetchIndexesRes.status === 200) {
+      onSearch();
+    }
   } catch (error) {
     console.error('Error in fetchIndexes:', error);
   }
 }
+const initGraph = () => {
+  initProfitLineChart();
+  initAnnualIncomeChart();
+}
+const updateGraph = () => {
+  updateProfitLineChart();
+  updateAnnualIncomeChart();
+}
+function initProfitLineChart () {
+  const chart4Profit = echarts.init(profitLineChartRef.value);
+  const option = {
+    title: {
+      text: '收益折线图'
+    },
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: {
+        type: 'cross'
+      }
+    },
+    legend: {
+      data: ['指数数据', '趋势投资', 'MA10', 'MA20', 'MA30', 'MA50', 'MA100']
+    },
+    xAxis: {
+      type: 'category',
+      boundaryGap: false,
+      data: data.dates
+    },
+    dataZoom: {
+      type: 'inside' // 放大缩小x轴数值
+    },
+    yAxis: {
+      type: 'value'
+    },
+    series: [
+      {
+        name: '指数数据',
+        type: 'line',
+        data: data.closePoints,
+        lineStyle: {
+          color: '#FF4040'
+        }
+      },
+      {
+        name: '趋势投资',
+        type: 'line',
+        data: data.profitValues,
+        lineStyle: {
+          color: '#5D98C8'
+        }
+      },
+      {
+        name: 'MA10',
+        type: 'line',
+        data: data.maDatas.map(d => d.ma10),
+        symbol: 'none',
+        lineStyle: {
+          color: '#00FF00'
+        }
+      },
+      {
+        name: 'MA20',
+        type: 'line',
+        data: data.maDatas.map(d => d.ma10),
+        symbol: 'none',
+        lineStyle: {
+          color: '#FF00FF'
+        }
+      },
+      {
+        name: 'MA30',
+        type: 'line',
+        data: data.maDatas.map(d => d.ma10),
+        symbol: 'none',
+        lineStyle: {
+          color: '#00FFFF'
+        }
+      },
+      {
+        name: 'MA50',
+        type: 'line',
+        data: data.maDatas.map(d => d.ma10),
+        symbol: 'none',
+        lineStyle: {
+          color: '#FFA500'
+        }
+      },
+      {
+        name: 'MA100',
+        type: 'line',
+        data: data.maDatas.map(d => d.ma10),
+        symbol: 'none',
+        lineStyle: {
+          color: '#800080'
+        }
+      }
+    ]
+  };
+  chart4Profit.setOption(option);
+  // chart4Profit.resize()
+  observeChartResize(profitLineChartRef.value, chart4Profit);
+}
+function initAnnualIncomeChart () {
+  const chart4AnnualIncome = echarts.init(annualIncomeChartRef.value);
+  const option = {
+    title: {
+      text: '指数/趋势收益分布对比图'
+    },
+    tooltip: {
+      trigger: 'axis'
+    },
+    legend: {
+      data: ['指数数据', '趋势投资']
+    },
+    xAxis: {
+      type: 'category',
+      data: data.annuals
+    },
+    yAxis: {
+      type: 'value'
+    },
+    series: [
+      {
+        name: '指数数据',
+        type: 'bar',
+        data: data.indexIncomes,
+        itemStyle: {
+          color: '#FF4040'
+        }
+      },
+      {
+        name: '趋势投资',
+        type: 'bar',
+        data: data.trendIncomes,
+        itemStyle: {
+          color: '#5D98C8'
+        }
+      }
+    ]
+  };
+  chart4AnnualIncome.setOption(option);
+  // chart4AnnualIncome.resize()
+  observeChartResize(annualIncomeChartRef.value, chart4AnnualIncome);
+}
+const updateProfitLineChart = () => {
+  const chart4Profit = echarts.getInstanceByDom(profitLineChartRef.value);
+
+  const option = {
+    xAxis: {
+      data: data.dates
+    },
+    yAxis: {
+      max: 'auto',
+      min: 'auto'
+    },
+    series: [
+      {
+        name: '指数数据',
+        data: data.closePoints
+      },
+      {
+        name: '趋势投资',
+        data: data.profitValues
+      },
+      {
+        name: 'MA10',
+        data: data.maDatas.map(d => d.ma10)
+      },
+      {
+        name: 'MA20',
+        data: data.maDatas.map(d => d.ma20)
+      },
+      {
+        name: 'MA30',
+        data: data.maDatas.map(d => d.ma30)
+      },
+      {
+        name: 'MA50',
+        data: data.maDatas.map(d => d.ma50)
+      },
+      {
+        name: 'MA100',
+        data: data.maDatas.map(d => d.ma100)
+      }
+    ]
+  };
+
+  chart4Profit.setOption(option);
+};
+
+const updateAnnualIncomeChart = () => {
+  const chart4AnnualIncome = echarts.getInstanceByDom(annualIncomeChartRef.value);
+  const option = {
+    xAxis: {
+      data: data.annuals
+    },
+    series: [
+      {
+        name: '指数数据',
+        data: data.indexIncomes
+      },
+      {
+        name: '趋势投资',
+        data: data.trendIncomes
+      }
+    ]
+  };
+  chart4AnnualIncome.setOption(option);
+};
+const observeChartResize = (chartContainer, chartInstance) => {
+  const resizeObserver = new ResizeObserver(entries => {
+    entries.forEach(entry => {
+      const width = entry.contentRect.width;
+      console.log('width', width)
+      if (width >= data.initialScale && width <= data.largestScale) {
+        chartInstance.resize();
+      }
+    });
+  });
+
+  resizeObserver.observe(chartContainer);
+
+  onUnmounted(() => {
+    resizeObserver.disconnect();
+  });
+};
 const fetchIndexes = async () => {
   return new Promise((resolve, reject) => {
     quantApi.getIndexes({}).then((res) => {
@@ -262,6 +505,7 @@ const simulate = async () => {
   try {
     // data.startDate = DateUtils.formatDate(data.startDate, 'yyyy-MM-dd')
     // data.endDate = DateUtils.formatDate(data.endDate, 'yyyy-MM-dd')
+    data.isSimulateLoading = true
     const str = "/" + data.currentIndex + "/" + data.ma + "/" + data.buyThreshold + "/" + data.sellThreshold + "/" + data.serviceCharge + "/" + data.startDate + "/" + data.endDate + "/"
     const params = {
       url: str
@@ -275,29 +519,16 @@ const simulate = async () => {
         clearIndexDatasAndMADatas()
         getIndexDatasAndMADatas(res.data.indexDatas, res.data.profits, res.data.maDatas)
         clearTradesDatas()
-        getTradesDatas(res.data.trades, res.data.winCount, res.data.lossCount, res.data.avgWinRate, res.data.avgLossRate)
-
-        data.annualProfits = [];
-        data.annuals = [];
-        data.indexIncomes = [];
-        data.trendIncomes = [];
-
-        // 某种策略的收益数据（2个api数组+4个api数值）
-
-        // data.annualProfits = res.data.annualProfits;
-        // data.tacticsResults.profitStastics = []
-        // const item1 = {
-        //   indexIncomeTotal: res.data.indexIncomeTotal,
-        //   indexIncomeAnnual: res.data.indexIncomeAnnual,
-        //   trendIncomeTotal: res.data.trendIncomeTotal,
-        //   trendIncomeAnnual: res.data.trendIncomeAnnual
-        // }
-        // data.incomeStastics.push(item1)
+        getTradesDatas(res.data.trades, res.data.tradeStastics)
+        clearIncomeDatas()
+        getIncomeDatas(res.data.annualProfits, res.data.incomeStastics)
       }
       data.loading = false
     })
   } catch (error) {
     console.error('Failed to simulate:', error)
+  } finally {
+    data.isSimulateLoading = false
   }
 }
 /**
@@ -313,36 +544,24 @@ function clearIndexDatasAndMADatas () {
   data.profitValues = []
 }
 /**
- * 清空交易数据
+ * 清空持续年、收益数据、收益小结；计算的年份数组、指数收益数组、趋势收益数组
+ */
+function clearIncomeDatas () {
+  data.years = 0;
+  data.annualProfits = [];
+  data.incomeStastics = [];
+  data.annuals = [];
+  data.indexIncomes = [];
+  data.trendIncomes = []
+}
+/**
+ * 清空交易数据、交易小结
  */
 function clearTradesDatas () {
   data.trades = [];
   data.tradeStastics = []
 }
-/** * 获取[交易数据、盈利交易次数、亏损交易次数、平均盈利比率、平均亏损比率] ->[总交易次数、胜率]
- * @param trades 交易数组
- * @param winCount
- * @param lossCount
- * @param avgWinRate
- * @param avgLossRate
- * @returns trades、tradeStastics
- */
-function getTradesDatas (trades, winCount, lossCount, avgWinRate, avgLossRate) {
-  try {
-    data.trades = trades
-    const item = {
-      winCount: winCount,
-      lossCount: lossCount,
-      avgWinRate: avgWinRate,
-      avgLossRate: avgLossRate,
-      totalTradeCount: winCount + lossCount,
-      winRate: ((winCount / (winCount + lossCount)) * 100).toFixed(2)
-    }
-    data.tradeStastics.push(item)
-  } catch (error) {
-    console.error('Failed to getTradesDatas:', error)
-  }
-}
+
 /** * 获取[指数数据、均线数据、起始日期、持续年]->[日期、收盘价、均线数组、指数收益数组]
  * @param indexDatas
  * @param profits
@@ -352,7 +571,14 @@ function getTradesDatas (trades, winCount, lossCount, avgWinRate, avgLossRate) {
 function getIndexDatasAndMADatas (indexDatas, profits, maDatas) {
   try {
     data.indexDatas = indexDatas;
-    data.maDatas = maDatas;
+    data.maDatas = maDatas.map(item => ({
+      date: item.date,
+      ma10: item.value[0],
+      ma20: item.value[1],
+      ma30: item.value[2],
+      ma50: item.value[3],
+      ma100: item.value[4]
+    }));
     data.profits = profits;
     // 确保数据长度一致
     if (data.indexDatas.length !== data.profits.length || data.indexDatas.length !== data.maDatas.length) {
@@ -372,17 +598,62 @@ function getIndexDatasAndMADatas (indexDatas, profits, maDatas) {
     console.error('Failed to get indexDatasAndMADatas:', error)
   }
 }
-
+/**
+ * 获取交易类数据
+ * @param trades 交易数组
+ * @param tradeStastics 交易小结数组[{盈利交易次数、亏损交易次数、平均盈利比率、平均亏损比率}]->计算[总交易次数、胜率]
+ * @returns trades、tradeStastics
+ */
+function getTradesDatas (trades, tradeStastics) {
+  try {
+    data.trades = trades
+    data.tradeStastics = tradeStastics.map(item => ({
+      winCount: item.winCount,
+      lossCount: item.lossCount,
+      avgWinRate: item.avgWinRate,
+      avgLossRate: item.avgLossRate,
+      totalTradeCount: item.winCount + item.lossCount,
+      winRate: ((item.winCount / (item.winCount + item.lossCount)) * 100).toFixed(2)
+    }))
+  } catch (error) {
+    console.error('Failed to getTradesDatas:', error)
+  }
+}
+/**
+ * 获取收益类数据
+ * @param annualProfits 收益数据[{年份、年指数收益、年趋势收益}]，
+ * @param incomeStastics 收益小结[{某策略总交易次数、某策略总交易收益、总交易收益率、总盈利交易次数、总盈利交易收益、总盈利交易收益率、某策略总亏损交易次数、某策略总亏损交易收益、某策略总亏损交易收益率}]
+ */
+function getIncomeDatas (annualProfits, incomeStastics) {
+  try {
+    data.annualProfits = annualProfits;
+    for (let i = 0; i < annualProfits.length; i++) {
+      data.annuals.push(annualProfits[i].year);
+      data.indexIncomes.push(annualProfits[i].indexIncome * 100);
+      data.trendIncomes.push(annualProfits[i].trendIncome * 100);
+    }
+    data.incomeStastics = incomeStastics.map(item => ({
+      incomeTotal: item.incomeTotal,
+      years: item.years,
+      title: item.title,
+      incomeAnnual: item.incomeAnnual
+    }))
+    console.log('获取收益数据和收益小结成功')
+  } catch (error) {
+    console.error('Failed to getIncomeDatas:', error)
+  }
+}
 const onSearch = () => {
   simulate();
+  updateGraph()
 }
 
 const handleIncomeClick = (tab, event) => {
-  // console.log(tab, event)
+  updateGraph()
 }
 
 const handleProfitClick = (tab, event) => {
-  // console.log(tab, event)
+  updateGraph()
 }
 </script>
 
@@ -394,5 +665,13 @@ const handleProfitClick = (tab, event) => {
 }
 .container{
   margin: 20px;
+  max-height:90vh;
+  overflow: auto;
+}
+.label-green{
+  color: green;
+}
+.label-red{
+  color: red;
 }
 </style>
