@@ -22,7 +22,9 @@ import loginApi from '@/api/Login/loginApi'
 import { onMounted, reactive } from 'vue';
 import { ElMessage } from 'element-plus'
 import { routerKey, useRouter } from 'vue-router';
+import { useStore } from 'vuex'
 const router = useRouter()
+const store = useStore()
 const data = reactive({
   loginForm: {
     username: '',
@@ -48,6 +50,11 @@ const login = async () => {
       if (res.data.state === 200 || res.data.state === "200") {
         console.log('res', res)
         ElMessage.success('登录成功')
+        store.commit('userInfoModule/loginChange', {
+          userName: data.loginForm.username,
+          Authorization: res.data.token,
+          signTime: new Date().getTime()
+        })
         router.push('/home')
       } else {
         ElMessage.error('登录失败')

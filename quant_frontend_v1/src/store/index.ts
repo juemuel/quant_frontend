@@ -1,5 +1,6 @@
 import { createStore } from 'vuex'
 import { SideBarModule } from './modules/sideBar';
+import { UserInfoModule } from './modules/userInfo';
 
 export default createStore({
   state: {
@@ -11,6 +12,7 @@ export default createStore({
   actions: {
   },
   modules: {
-    sidebarModule: SideBarModule
+    sidebarModule: SideBarModule,
+    userInfoModule: UserInfoModule
   }
 })

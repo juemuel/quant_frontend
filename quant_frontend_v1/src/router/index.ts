@@ -1,6 +1,7 @@
 import { createRouter, createWebHashHistory, RouteRecordRaw } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import LayoutView from '@/Layout/pc/LayoutView.vue'
+import { ElMessage } from 'element-plus'
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
@@ -76,10 +77,23 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('../views/Login/pc/LoginView01.vue')
   }
 ]
-
 const router = createRouter({
   history: createWebHashHistory(),
   routes
 })
-
+router.beforeEach((to, from, next) => {
+  console.log('to', to)
+  if (to.path === '/login01') {
+    next();
+  } else {
+    const Authorization = localStorage.getItem('Authorization');
+    console.log('Authorization', Authorization)
+    if (Authorization === null || Authorization === '' || Authorization === undefined || Authorization === 'undefined') {
+      ElMessage.error('请先登录');
+      next('/login01');
+    } else {
+      next();
+    }
+  }
+});
 export default router
