@@ -53,6 +53,17 @@ const data = reactive({
     ]
   },
   {
+    index: '/market',
+    name: '市场行情',
+    icon: 'icon-park-outline:market',
+    children: [
+      { index: '/market/myStocks', name: '我的自选股', icon: 'subway:mark-2' },
+      { index: '/market/allIndex', name: '指数中心', icon: 'hugeicons:market-analysis' },
+      { index: '/market/allStocks', name: '股票中心', icon: 'hugeicons:apple-stocks' },
+      { index: '/market/allFutures', name: '期货中心', icon: 'token:future' }
+    ]
+  },
+  {
     index: '/quant',
     name: '量化系统',
     icon: 'ep:trend-charts',

@@ -9,7 +9,37 @@ const routes: Array<RouteRecordRaw> = [
     children: [
       { path: '', redirect: '/home' },
       { path: '/home', component: HomeView },
-      {
+      { // 市场行情
+        path: '/market',
+        children: [
+          {
+            path: 'myStocks',
+            name: 'myStocks',
+            component: () => import('../views/Market/pc/MyStocksView.vue')
+          },
+          {
+            path: 'allStocks',
+            name: 'allStocks',
+            component: () => import('../views/Market/pc/AllStocksView.vue')
+          },
+          {
+            path: 'allIndex',
+            name: 'allIndex',
+            component: () => import('../views/Market/pc/AllIndexView.vue')
+          },
+          {
+            path: 'allStocks',
+            name: 'allStocks',
+            component: () => import('../views/Market/pc/AllStocksView.vue')
+          },
+          {
+            path: 'allFutures',
+            name: 'allFutures',
+            component: () => import('../views/Market/pc/AllFuturesView.vue')
+          }
+        ]
+      },
+      { // 量化中心
         path: '/quant',
         children: [
           {
@@ -24,7 +54,7 @@ const routes: Array<RouteRecordRaw> = [
           }
         ]
       },
-      {
+      { // 系统管理
         path: '/system',
         children: [
           {
@@ -39,7 +69,7 @@ const routes: Array<RouteRecordRaw> = [
           }
         ]
       },
-      {
+      { // 产品管理
         path: '/product',
         children: [
           {
@@ -59,7 +89,7 @@ const routes: Array<RouteRecordRaw> = [
           }
         ]
       },
-      {
+      { // 订单管理
         path: '/order',
         children: [
           {
