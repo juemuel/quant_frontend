@@ -11,8 +11,4 @@ export default {
     const url = process.env.VUE_APP_BASE_URL + '/backtest/simulate' + params.url
     return await http.get(url, {}, {})
   }
-  // saveUserActionData: async function (params: any, headerData: any): Promise<any> {
-  //   const url = process.env.VUE_APP_JUE_API + '/cup/userAction/save'
-  //   return await http.post(url, qs.stringify(params), headerData)
-  // },
 }

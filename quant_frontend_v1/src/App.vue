@@ -18,7 +18,10 @@ export default defineComponent({
           clearTimeout(timer)
         }
         timer = setTimeout(() => {
-          fn(...args)
+          // 检查DOM元素是否仍然存在
+          if (args[0] && args[0].length > 0 && args[0][0].target) {
+            fn(...args)
+          }
         }, delay)
       }
     }
@@ -28,9 +31,17 @@ export default defineComponent({
         callback = debounce(callback, 200);
         super(callback);
       }
+
+      // 重写disconnect方法，确保清理定时器
+      disconnect () {
+        super.disconnect();
+        if (this._callback && this._callback.timer) {
+          clearTimeout(this._callback.timer);
+        }
+      }
     }
   }
-})
+});
 </script>
 
 <style lang="scss">

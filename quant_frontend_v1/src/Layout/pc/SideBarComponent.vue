@@ -5,19 +5,24 @@
     class="el-menu-vertical-demo"
     router
     @select="handleSelect"
+    :collapse="isCollapse"
     >
     <el-menu-item index="/home">
       <Icon :icon="data.menuList[0].icon" :width="20" :height="20" />
-      &nbsp;&nbsp;{{ data.menuList[0].name }}
+      <template #title>
+        {{ data.menuList[0].name }}
+      </template>
     </el-menu-item>
     <el-sub-menu
       v-for="(subItem) in data.menuList.slice(1)"
       :key="subItem.index"
       :index="subItem.index"
+      :popper-append-to-body="true"
+      popper-class="menu-popo"
     >
       <template #title>
         <Icon :icon="subItem.icon" :width="20" :height="20" />
-         &nbsp;&nbsp;{{ subItem.name }}
+        <span>{{ subItem.name }}</span>
       </template>
       <el-menu-item
         v-for="(menuItem) in subItem.children"
@@ -25,16 +30,23 @@
         :index="menuItem.index"
       >
         <Icon :icon="menuItem.icon" :width="20" :height="20" />
-         &nbsp;&nbsp;{{ menuItem.name }}
+        <template #title>
+          {{ menuItem.name }}
+        </template>
       </el-menu-item>
     </el-sub-menu>
   </el-menu>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, defineProps } from 'vue';
 import { useStore } from 'vuex';
 import Icon from '@/components/IconifyIcon.vue'
+
+const props = defineProps<{
+  isCollapse: boolean
+}>();
+
 const data = reactive({
   activeIndex: '/home',
   openedIndex: ['/home'],
@@ -68,7 +80,8 @@ const data = reactive({
     name: '量化系统',
     icon: 'ep:trend-charts',
     children: [
-      { index: '/quant/recommend', name: '推荐系统', icon: 'ep:pointer' },
+      { index: '/quant/monitor', name: '监控系统', icon: 'ep:monitor' },
+      { index: '/quant/strategyMarket', name: '策略市场', icon: 'ep:shopping-bag' },
       { index: '/quant/backTest', name: '回测系统', icon: 'ep:data-line' }
     ]
   },
@@ -96,11 +109,7 @@ onMounted(() => {
   data.activeIndex = localStorage.getItem("sideBarDefaultActive") || "";
   data.openedIndex = (JSON.parse(localStorage.getItem("sideBarDefaultOpened") || "[]")) as string[]
 })
-/**
- * 菜单栏点击事件
- * @param index 路径（从父路径到子路径名）
- * @param path 一般是二个字符串构成的路径数组，父路径名，和子路径名
- */
+
 function handleSelect (index: string, path: string[]) {
   console.log('select', index, path)
   const params = {
@@ -119,23 +128,83 @@ function handleSelect (index: string, path: string[]) {
 <style scoped lang="scss">
 .el-menu {
   border: none;
-  background-color: #333 !important;
+  background-color: #304156 !important;
   color: rgb(191, 203, 217) !important;
 }
 ::v-deep .el-sub-menu__title:hover{
-  background-color: #333 !important;
+  background-color: #263445 !important;
 }
 .el-menu-item {
-  background-color: #333  !important;
+  background-color: #304156 !important;
   color: rgb(191, 203, 217) !important;
 }
 .el-menu-item:hover{
   outline: 0 !important;
   color: #409EFF !important;
-  background: #333 !important;
+  background: #263445 !important;
 }
 .el-menu-item.is-active {
   color: #fff !important;
   background: #409EFF !important;
+}
+::v-deep .el-menu--popup {
+  min-width: 160px;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none;
+  background-color: #304156 !important;
+  position: fixed !important;
+  left: 64px !important;
+  top: 0 !important;
+  transform: translateX(0) !important;
+}
+::v-deep .el-menu--popup .el-menu-item {
+  height: 40px;
+  line-height: 40px;
+  padding: 0 20px;
+  min-width: 160px;
+}
+::v-deep .el-menu--popup .el-menu-item:hover {
+  background-color: #263445 !important;
+  color: #fff !important;
+}
+.el-menu-item.is-active {
+  color: #fff !important;
+  background: #409EFF !important;
+}
+.menu-popo {
+  border: none !important;
+  padding: 0 !important;
+  box-shadow: 0 2px 12px 0 rgba(0,0,0,.1);
+  position: fixed !important;
+  margin: 0 !important;
+  transform: translateX(0) !important;
+  transition: opacity 0.3s !important;
+  background-color: #304156 !important;
+  min-width: 160px !important;
+  left: 64px !important;
+  top: 0 !important;
+}
+::v-deep .el-menu--popup {
+  border-radius: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+.el-menu-item span,
+::v-deep .el-sub-menu__title span {
+  opacity: 1;
+  transition: opacity 0.3s ease-in-out;
+}
+
+::v-deep .el-menu--collapse .el-menu-item span,
+::v-deep .el-menu--collapse .el-sub-menu__title span {
+  opacity: 0;
+}
+.el-menu-vertical-demo:not(.el-menu--collapse) {
+  width: 200px;
+  min-height: 400px;
+}
+
+.el-menu--collapse {
+  width: 64px;
 }
 </style>

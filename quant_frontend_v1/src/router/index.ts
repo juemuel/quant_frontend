@@ -28,11 +28,6 @@ const routes: Array<RouteRecordRaw> = [
             component: () => import('../views/Market/pc/AllIndexView.vue')
           },
           {
-            path: 'allStocks',
-            name: 'allStocks',
-            component: () => import('../views/Market/pc/AllStocksView.vue')
-          },
-          {
             path: 'allFutures',
             name: 'allFutures',
             component: () => import('../views/Market/pc/AllFuturesView.vue')
@@ -43,14 +38,19 @@ const routes: Array<RouteRecordRaw> = [
         path: '/quant',
         children: [
           {
-            path: 'recommend',
-            name: 'recommend',
-            component: () => import('../views/Quant/pc/RecommendView.vue')
+            path: 'monitor',
+            name: 'monitor',
+            component: () => import('../views/Quant/pc/MonitorView.vue')
           },
           {
             path: 'backTest',
             name: 'backTest',
             component: () => import('../views/Quant/pc/BackTestView.vue')
+          },
+          {
+            path: 'strategyMarket',
+            name: 'strategyMarket',
+            component: () => import('../views/Quant/pc/StrategyMarketView.vue')
           }
         ]
       },

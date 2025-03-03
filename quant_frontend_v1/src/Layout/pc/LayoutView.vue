@@ -1,11 +1,14 @@
 <template>
   <div class="sidebar-container">
     <el-container style="height: 100%;">
-      <el-aside class="side-bar">
-        <div class="title">Juemuel's Workspace</div>
-        <SideBarComponent />
+      <el-aside class="side-bar" :class="{ 'is-collapsed': isCollapse }">
+        <div class="title" :class="{ 'is-collapsed': isCollapse }">{{ isCollapse ? 'Jue' : 'Juemuel\'s Workspace' }}</div>
+        <SideBarComponent :is-collapse="isCollapse" />
       </el-aside>
-      <el-container class="main-container">
+      <div class="hamburger-container" :class="{ 'is-collapsed': isCollapse }" @click="toggleSideBar">
+        <Icon :icon="isCollapse ? 'ep:arrow-right-bold' : 'ep:arrow-left-bold'" :width="24" :height="24" style="color: #fff;" />
+      </div>
+      <el-container class="main-container" :class="{ 'is-collapsed': isCollapse }">
         <el-header class="header">
           <HeaderComponent />
         </el-header>
@@ -14,39 +17,67 @@
     </el-container>
   </div>
 </template>
-<script>
+<script setup>
+import { ref } from 'vue';
 import HeaderComponent from "./HeaderComponent.vue";
 import SideBarComponent from "./SideBarComponent.vue";
-export default {
-  name: "LayoutView",
-  components: {
-    SideBarComponent,
-    HeaderComponent
-  }
+import Icon from '@/components/IconifyIcon.vue';
+
+const isCollapse = ref(false);
+
+const toggleSideBar = () => {
+  isCollapse.value = !isCollapse.value;
 };
 </script>
 
 <style scoped>
 .header {
   padding: 0;
+  display: flex;
+  align-items: center;
 }
 
+.hamburger-container {
+  padding: 0 10px;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: fixed;
+  left: 210px;
+  top: 60px;
+  transform: translateY(0);
+  height: 40px;
+  line-height: 40px;
+  background-color: #304156;
+  z-index: 1002;
+  display: flex;
+  align-items: center;
+  border-radius: 0 20px 20px 0;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.15);
+}
+
+.hamburger-container:hover {
+  background-color: #409EFF;
+}
 .title {
   height: 50px;
   line-height: 50px;
   font-size: 22px;
   font-weight: 600;
   color: #fff;
-  background-color: #2b2f3a;
+  background-color: #304156;
   text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: all 0.3s;
 }
-
+.title.is-collapsed {
+  font-size: 20px;
+}
 .sidebar-container {
   height: 100%;
 }
-
 .side-bar {
-  transition: width 0.28s;
+  transition: all 0.28s ease-in-out;
   width: 210px !important;
   background-color: #304156;
   height: 100%;
@@ -56,14 +87,42 @@ export default {
   bottom: 0;
   left: 0;
   z-index: 1001;
+  overflow-x: hidden;
+  box-shadow: 0 1px 4px rgba(0,21,41,.08);
+}
+
+.side-bar.is-collapsed {
+  width: 64px !important;
+}
+
+.title {
+  height: 50px;
+  line-height: 50px;
+  font-size: 22px;
+  font-weight: 600;
+  color: #fff;
+  background-color: #304156;
+  text-align: center;
+  white-space: nowrap;
   overflow: hidden;
+  transition: all 0.3s;
+}
+.hamburger-container.is-collapsed {
+  left: 64px;
 }
 
 .main-container {
   min-height: 100%;
-  -webkit-transition: margin-left 0.28s;
-  transition: margin-left 0.28s;
+  transition: margin-left 0.28s ease-in-out;
   margin-left: 210px;
   position: relative;
+}
+
+.main-container.is-collapsed {
+  margin-left: 64px;
+}
+
+.el-aside {
+  overflow: hidden;
 }
 </style>

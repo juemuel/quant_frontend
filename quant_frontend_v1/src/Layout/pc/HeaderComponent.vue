@@ -2,7 +2,6 @@
   <div class="header-container">
     <el-breadcrumb separator="/" class="breadcrumb">
       <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
-      <el-breadcrumb-item>{{name}}</el-breadcrumb-item>
     </el-breadcrumb>
     <div class="drop-down">
       <el-dropdown>
@@ -26,6 +25,7 @@ import { ElMessage } from 'element-plus'
 import { routerKey, useRouter } from 'vue-router';
 import { useStore } from 'vuex'
 const router = useRouter()
+
 const store = useStore()
 const data = reactive({
   username: localStorage.getItem("userName") || '未知'

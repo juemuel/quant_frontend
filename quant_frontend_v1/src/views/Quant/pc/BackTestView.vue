@@ -64,7 +64,7 @@
         </el-button>
       </el-form>
       <!-- 标签页 -->
-      <el-tabs v-model="data.activeIncomeTab" @tab-click="handleIncomeClick">
+      <el-tabs v-model="data.activeIncomeTab" @tab-click="handleTabChange">
         <el-tab-pane label="收益小结√" name="first">
           <el-table :data="data.incomeStastics" :loading="data.isSimulateLoading" :key="Math.random()" stripe style="width: 100%">
             <el-table-column prop="title" label="投资类型"  align="center"></el-table-column>
@@ -88,10 +88,10 @@
           </el-table>
         </el-tab-pane>
         <el-tab-pane label="收益折线图√" name="second">
-          <div ref="profitLineChartRef" style="height: 400px;width: 100%;"></div>
+          <div class="chart-container" ref="profitLineChartRef"></div>
         </el-tab-pane>
         <el-tab-pane label="收益年分布图√" name="third">
-          <div ref="annualIncomeChartRef" style="height: 400px;width: 100%;"></div>
+          <div class="chart-container" ref="annualIncomeChartRef"></div>
         </el-tab-pane>
         <el-tab-pane label="收益年分布表√" name="forth">
           <el-table :data="data.annualProfits" :loading="data.isSimulateLoading" :key="Math.random()" stripe style="width: 100%">
@@ -113,7 +113,7 @@
           </el-table>
         </el-tab-pane>
       </el-tabs>
-      <el-tabs v-model="data.activeProfitTab" @tab-click="handleProfitClick">
+      <el-tabs v-model="data.activeProfitTab" @tab-click="handleTabChange">
         <el-tab-pane label="策略交易统计√" name="first">
           <el-table :data="data.tradeStastics" :loading="data.isSimulateLoading" :key="Math.random()" stripe style="width: 100%">
             <el-table-column prop="totalTradeCount" label="总交易次数" align="center"></el-table-column>
@@ -322,7 +322,7 @@ function initProfitLineChart () {
       {
         name: 'MA20',
         type: 'line',
-        data: data.maDatas.map(d => d.ma10),
+        data: data.maDatas.map(d => d.ma20),
         symbol: 'none',
         lineStyle: {
           color: '#FF00FF'
@@ -331,7 +331,7 @@ function initProfitLineChart () {
       {
         name: 'MA30',
         type: 'line',
-        data: data.maDatas.map(d => d.ma10),
+        data: data.maDatas.map(d => d.ma30),
         symbol: 'none',
         lineStyle: {
           color: '#00FFFF'
@@ -340,7 +340,7 @@ function initProfitLineChart () {
       {
         name: 'MA50',
         type: 'line',
-        data: data.maDatas.map(d => d.ma10),
+        data: data.maDatas.map(d => d.ma50),
         symbol: 'none',
         lineStyle: {
           color: '#FFA500'
@@ -349,7 +349,7 @@ function initProfitLineChart () {
       {
         name: 'MA100',
         type: 'line',
-        data: data.maDatas.map(d => d.ma10),
+        data: data.maDatas.map(d => d.ma100),
         symbol: 'none',
         lineStyle: {
           color: '#800080'
@@ -358,7 +358,6 @@ function initProfitLineChart () {
     ]
   };
   chart4Profit.setOption(option);
-  // chart4Profit.resize()
   observeChartResize(profitLineChartRef.value, chart4Profit);
 }
 function initAnnualIncomeChart () {
@@ -400,11 +399,14 @@ function initAnnualIncomeChart () {
     ]
   };
   chart4AnnualIncome.setOption(option);
-  // chart4AnnualIncome.resize()
   observeChartResize(annualIncomeChartRef.value, chart4AnnualIncome);
 }
 const updateProfitLineChart = () => {
-  const chart4Profit = echarts.getInstanceByDom(profitLineChartRef.value);
+  if (!profitLineChartRef.value) return;
+  let chart4Profit = echarts.getInstanceByDom(profitLineChartRef.value);
+  if (!chart4Profit) {
+    chart4Profit = echarts.init(profitLineChartRef.value);
+  }
 
   const option = {
     xAxis: {
@@ -450,7 +452,11 @@ const updateProfitLineChart = () => {
 };
 
 const updateAnnualIncomeChart = () => {
-  const chart4AnnualIncome = echarts.getInstanceByDom(annualIncomeChartRef.value);
+  if (!annualIncomeChartRef.value) return;
+  let chart4AnnualIncome = echarts.getInstanceByDom(annualIncomeChartRef.value);
+  if (!chart4AnnualIncome) {
+    chart4AnnualIncome = echarts.init(annualIncomeChartRef.value);
+  }
   const option = {
     xAxis: {
       data: data.annuals
@@ -468,21 +474,35 @@ const updateAnnualIncomeChart = () => {
   };
   chart4AnnualIncome.setOption(option);
 };
+const handleTabChange = () => {
+  nextTick(() => {
+    if (profitLineChartRef.value) {
+      const chart4Profit = echarts.getInstanceByDom(profitLineChartRef.value);
+      if (chart4Profit) chart4Profit.resize();
+    }
+    if (annualIncomeChartRef.value) {
+      const chart4AnnualIncome = echarts.getInstanceByDom(annualIncomeChartRef.value);
+      if (chart4AnnualIncome) chart4AnnualIncome.resize();
+    }
+  });
+};
+
 const observeChartResize = (chartContainer, chartInstance) => {
-  const resizeObserver = new ResizeObserver(entries => {
-    entries.forEach(entry => {
-      const width = entry.contentRect.width;
-      console.log('width', width)
-      if (width >= data.initialScale && width <= data.largestScale) {
-        chartInstance.resize();
-      }
-    });
+  const resizeObserver = new ResizeObserver(() => {
+    if (chartInstance && !chartInstance.isDisposed()) {
+      chartInstance.resize();
+    }
   });
 
   resizeObserver.observe(chartContainer);
 
   onUnmounted(() => {
-    resizeObserver.disconnect();
+    if (resizeObserver) {
+      resizeObserver.disconnect();
+    }
+    if (chartInstance && !chartInstance.isDisposed()) {
+      chartInstance.dispose();
+    }
   });
 };
 const fetchIndexes = async () => {
@@ -665,8 +685,20 @@ const handleProfitClick = (tab, event) => {
 }
 .container{
   margin: 20px;
-  max-height:90vh;
+  max-height: 90vh;
   overflow: auto;
+  width: auto;
+}
+
+.el-tabs__content {
+  overflow: visible;
+}
+
+.chart-container {
+  width: 100%;
+  height: 400px;
+  margin: 0 auto;
+  position: relative;
 }
 .label-green{
   color: green;
