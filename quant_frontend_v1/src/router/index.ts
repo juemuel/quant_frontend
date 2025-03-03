@@ -105,6 +105,11 @@ const routes: Array<RouteRecordRaw> = [
     path: '/login01',
     name: 'login01',
     component: () => import('../views/Login/pc/LoginView01.vue')
+  },
+  {
+    path: '/demo',
+    name: 'demo',
+    component: () => import('../views/DemoView.vue')
   }
 ]
 const router = createRouter({

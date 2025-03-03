@@ -23,7 +23,7 @@ import Icon from '@/components/IconifyIcon.vue';
 import { defineEmits, ref } from 'vue';
 const emit = defineEmits(['handleSetLineChartData']);
 // 触发自定义事件
-const handleSetLineChartData = (type) => {
+const handleSetLineChartData = (type: any) => {
   emit('handleSetLineChartData', type); // 冒泡 handleSetLineChartData 事件
 };
 const cardItems = ref([
