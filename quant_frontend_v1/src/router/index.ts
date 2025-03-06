@@ -104,7 +104,10 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/login01',
     name: 'login01',
-    component: () => import('../views/Login/pc/LoginView01.vue')
+    component: () => import('../views/Login/pc/LoginView01.vue'),
+    meta: {
+      hideToolbar: true // 标记需要隐藏工具栏
+    }
   },
   {
     path: '/demo',
