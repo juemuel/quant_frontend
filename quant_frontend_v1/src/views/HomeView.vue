@@ -2,61 +2,41 @@
   <div class="stock-market-container">
     <!-- 市场概况 -->
     <el-row :gutter="20">
-      <el-col :span="8">
+      <el-col :span="8" v-for="(market, index) in processedMarkets" :key="index">
         <el-card class="market-card">
           <div class="card-header">
-            <span class="header-title">大盘行情</span>
-            <span class="update-time">更新时间: 15:00:00</span>
+            <span class="header-title">{{ market.title }}</span>
+            <span class="card-update-time">更新时间: {{ market.updateTime }}</span>
           </div>
           <div class="stock-grid">
-            <div v-for="(item, index) in marketOverview" :key="index" class="stock-item">
-              <div class="stock-name">{{ item.name }}</div>
-              <div class="stock-code">{{ item.code }}</div>
-              <div :class="['stock-price', item.change > 0 ? 'price-up' : 'price-down']">
-                {{ item.price }}
-              </div>
-              <div :class="['stock-change', item.change > 0 ? 'price-up' : 'price-down']">
-                {{ item.change > 0 ? '+' : '' }}{{ item.change }}%
+            <div class="stock-column">
+              <div class="column-title">涨幅前5</div>
+              <div
+                v-for="(item, itemIndex) in market.topGainers"
+                :key="itemIndex"
+                class="stock-item"
+              >
+                <div class="stock-name">{{ item.name }}</div>
+                <div class="stock-code">{{ item.code }}</div>
+                <div :class="['stock-price', 'price-up']">{{ item.price }}</div>
+                <div :class="['stock-change', 'price-up']">
+                  +{{ item.change }}%
+                </div>
               </div>
             </div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="8">
-        <el-card class="market-card">
-          <div class="card-header">
-            <span class="header-title">重要指数</span>
-            <span class="update-time">更新时间: 15:00:00</span>
-          </div>
-          <div class="stock-grid">
-            <div v-for="(item, index) in importantIndices" :key="index" class="stock-item">
-              <div class="stock-name">{{ item.name }}</div>
-              <div class="stock-code">{{ item.code }}</div>
-              <div :class="['stock-price', item.change > 0 ? 'price-up' : 'price-down']">
-                {{ item.price }}
-              </div>
-              <div :class="['stock-change', item.change > 0 ? 'price-up' : 'price-down']">
-                {{ item.change > 0 ? '+' : '' }}{{ item.change }}%
-              </div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="8">
-        <el-card class="market-card">
-          <div class="card-header">
-            <span class="header-title">期货行情</span>
-            <span class="update-time">更新时间: 15:00:00</span>
-          </div>
-          <div class="stock-grid">
-            <div v-for="(item, index) in futuresMarket" :key="index" class="stock-item">
-              <div class="stock-name">{{ item.name }}</div>
-              <div class="stock-code">{{ item.code }}</div>
-              <div :class="['stock-price', item.change > 0 ? 'price-up' : 'price-down']">
-                {{ item.price }}
-              </div>
-              <div :class="['stock-change', item.change > 0 ? 'price-up' : 'price-down']">
-                {{ item.change > 0 ? '+' : '' }}{{ item.change }}%
+            <div class="stock-column">
+              <div class="column-title">跌幅前5</div>
+              <div
+                v-for="(item, itemIndex) in market.topLosers"
+                :key="itemIndex"
+                class="stock-item"
+              >
+                <div class="stock-name">{{ item.name }}</div>
+                <div class="stock-code">{{ item.code }}</div>
+                <div :class="['stock-price', 'price-down']">{{ item.price }}</div>
+                <div :class="['stock-change', 'price-down']">
+                  {{ item.change }}%
+                </div>
               </div>
             </div>
           </div>
@@ -68,12 +48,15 @@
       <div class="stock-search">
         <div class="search-title">股票导入</div>
         <div class="search-input-wrapper">
-          <el-input
-            v-model="searchInput"
-            placeholder="请在这里输入代码或名称"
-            class="search-input"
-          >
-            <template #append>
+          <el-row :gutter="10">
+            <el-col :span="18">
+              <el-input
+                v-model="searchInput"
+                placeholder="请在这里输入代码或名称"
+                class="search-input"
+              />
+            </el-col>
+            <el-col :span="6">
               <div class="search-buttons">
                 <el-button type="primary" class="import-button">
                   <el-icon><Document /></el-icon>
@@ -84,8 +67,8 @@
                   图片识别
                 </el-button>
               </div>
-            </template>
-          </el-input>
+            </el-col>
+          </el-row>
         </div>
       </div>
     </el-card>
@@ -216,50 +199,70 @@ const searchInput = ref('');
 const recentSearchInput = ref('');
 const activeChartTab = ref('daily');
 let chart = null;
-
-// Mock data
-const marketOverview = ref([
-  { name: '张德帅5', code: '沪指帅5', price: '198.56', change: 5.67 },
-  { name: '宁德时代', code: '300750', price: '198.56', change: 5.67 },
-  { name: '恒瑞医药', code: '600276', price: '32.45', change: -4.56 },
-  { name: '比亚迪', code: '002594', price: '245.89', change: 4.23 },
-  { name: '隆基股份', code: '601012', price: '45.67', change: -3.89 },
-  { name: '中国平安', code: '601318', price: '45.23', change: 5.86 },
-  { name: '药明康德', code: '603259', price: '78.34', change: -3.43 },
-  { name: '贵州茅台', code: '600519', price: '1689.00', change: 3.35 },
-  { name: '五方控股', code: '300093', price: '18.76', change: -3.12 },
-  { name: '招商银行', code: '600036', price: '35.68', change: 2.98 },
-  { name: '迈瑞医疗', code: '300760', price: '289.45', change: -2.87 },
-]);
-
-const importantIndices = ref([
-  { name: '张德帅5', code: '深证帅5', price: '2345.67', change: 3.45 },
-  { name: '新能源指数', code: '399989', price: '2345.67', change: 3.45 },
-  { name: '房地产指数', code: '399393', price: '1234.56', change: 3.21 },
-  { name: '半导体指数', code: '399678', price: '3456.78', change: 2.89 },
-  { name: '银行指数', code: '399986', price: '2345.67', change: -2.87 },
-  { name: '医药指数', code: '399989', price: '4567.89', change: 2.34 },
-  { name: '房地指数', code: '399989', price: '3456.78', change: 2.45 },
-  { name: '消费指数', code: '399997', price: '5678.90', change: -2.12 },
-  { name: '保安指数', code: '399998', price: '4567.89', change: 2.12 },
-  { name: '科技指数', code: '399906', price: '6789.01', change: 1.98 },
-  { name: '创业指数', code: '399987', price: '5678.90', change: -1.98 },
-]);
-
-const futuresMarket = ref([
-  { name: '张德帅5', code: '黑帅帅5', price: '389.25', change: 4.56 },
-  { name: '沪金主力', code: 'AU2312', price: '389.25', change: 4.56 },
-  { name: '螺纹主力', code: '(RB2312', price: '3756.00', change: -3.43 },
-  { name: '沪铜主力', code: 'CU2312', price: '678.90', change: 3.89 },
-  { name: '热卷主力', code: 'HC2312', price: '4567.89', change: -3.12 },
-  { name: '沪铝主力', code: 'AL2312', price: '567.89', change: 3.45 },
-  { name: '焦炭主力', code: 'J2312', price: '2345.67', change: -2.87 },
-  { name: '沪锡主力', code: 'NI2312', price: '156.78', change: 3.13 },
-  { name: '焦煤主力', code: 'JM2312', price: '1678.90', change: -2.45 },
-  { name: '沪镍主力', code: 'SN2312', price: '234.56', change: 2.87 },
-  { name: '铁矿主力', code: 'I2312', price: '890.12', change: -2.12 },
-]);
-
+// 一、今日股票、期货、指数行情数据
+const markets = [
+  {
+    title: '今日股票',
+    data: [
+      { name: '宁德时代', code: '300750', price: '198.56', change: 5.67 },
+      { name: '恒瑞医药', code: '600276', price: '32.45', change: -4.56 },
+      { name: '比亚迪', code: '002594', price: '245.89', change: 4.23 },
+      { name: '隆基股份', code: '601012', price: '45.67', change: -3.89 },
+      { name: '中国平安', code: '601318', price: '45.23', change: 5.86 },
+      { name: '药明康德', code: '603259', price: '78.34', change: -3.43 },
+      { name: '贵州茅台', code: '600519', price: '1689.00', change: 3.35 },
+      { name: '五方控股', code: '300093', price: '18.76', change: -3.12 },
+      { name: '招商银行', code: '600036', price: '35.68', change: 2.98 },
+      { name: '迈瑞医疗', code: '300760', price: '289.45', change: -2.87 },
+    ],
+    updateTime: '2023-07-04 15:30:00',
+  },
+  {
+    title: '今日指数',
+    data: [
+      { name: '新能源指数', code: '399989', price: '2345.67', change: 3.45 },
+      { name: '房地产指数', code: '399393', price: '1234.56', change: 3.21 },
+      { name: '半导体指数', code: '399678', price: '3456.78', change: 2.89 },
+      { name: '银行指数', code: '399986', price: '2345.67', change: -2.87 },
+      { name: '医药指数', code: '399989', price: '4567.89', change: 2.34 },
+      { name: '房地指数', code: '399989', price: '3456.78', change: 2.45 },
+      { name: '消费指数', code: '399997', price: '5678.90', change: -2.12 },
+      { name: '保安指数', code: '399998', price: '4567.89', change: 2.12 },
+      { name: '科技指数', code: '399906', price: '6789.01', change: 1.98 },
+      { name: '创业指数', code: '399987', price: '5678.90', change: -1.98 },
+    ],
+    updateTime: '2023-07-04 15:30:00'
+  },
+  {
+    title: '今日行情',
+    data: [
+      { name: '沪金主力', code: 'AU2312', price: '389.25', change: 4.56 },
+      { name: '螺纹主力', code: '(RB2312', price: '3756.00', change: -3.43 },
+      { name: '沪铜主力', code: 'CU2312', price: '678.90', change: 3.89 },
+      { name: '热卷主力', code: 'HC2312', price: '4567.89', change: -3.12 },
+      { name: '沪铝主力', code: 'AL2312', price: '567.89', change: 3.45 },
+      { name: '焦炭主力', code: 'J2312', price: '2345.67', change: -2.87 },
+      { name: '沪锡主力', code: 'NI2312', price: '156.78', change: 3.13 },
+      { name: '焦煤主力', code: 'JM2312', price: '1678.90', change: -2.45 },
+      { name: '沪镍主力', code: 'SN2312', price: '234.56', change: 2.87 },
+      { name: '铁矿主力', code: 'I2312', price: '890.12', change: -2.12 },
+    ],
+    updateTime: '2023-07-04 15:30:00'
+  }
+]
+const processedMarkets = computed(() => {
+  return markets.map((market) => {
+    const sortedData = [...market.data].sort((a, b) => b.change - a.change);
+    const topGainers = sortedData.filter((item) => item.change > 0).slice(0, 5); // 涨幅前5
+    const topLosers = sortedData.filter((item) => item.change < 0).slice(0, 5); // 跌幅前5
+    return {
+      ...market,
+      topGainers,
+      topLosers,
+    };
+  });
+});
+// 二、搜索栏数据
 const recentSearches = ref([
   { name: '贵州茅台', code: '600519', changePercentage: 2.35 },
   { name: '宁德时代', code: '300750', changePercentage: -1.24 },
@@ -267,7 +270,7 @@ const recentSearches = ref([
   { name: '招商银行', code: '600036', changePercentage: -0.45 },
   { name: '比亚迪', code: '002594', changePercentage: 3.56 },
 ]);
-
+// 三
 const currentStock = ref({
   name: '宁德时代',
   code: '300750',
@@ -287,6 +290,14 @@ const relatedNews = ref([
   {
     content: '创新药板块估值偏高，医药行业整体震荡继续横向',
     time: '1小时前',
+  },
+  {
+    content: '半导体产业链集中高改，国产替代进程加速',
+    time: '2小时前',
+  },
+  {
+    content: '半导体产业链集中高改，国产替代进程加速',
+    time: '2小时前',
   },
   {
     content: '半导体产业链集中高改，国产替代进程加速',
@@ -362,286 +373,351 @@ function initChart() {
   });
 }
 </script>
-<style>
+<style scoped lang="scss">
 .stock-market-container {
   padding: 20px 100px 20px 100px;
   background-color: #f5f7fa;
   font-family: Arial, sans-serif;
 }
-
 /* Market Cards */
 .market-card, .search-card, .stock-detail-card, .news-card, .technical-card, .recent-searches-card {
   margin-bottom: 20px;
   border-radius: 4px;
 }
-
 .card-header {
   display: flex;
   justify-content: space-between;
   padding-bottom: 8px;
   border-bottom: 1px solid #eee;
   margin-bottom: 8px;
+  .header-title {
+    font-size: 16px;
+    font-weight: bold;
+  }
+  .card-update-time {
+    color: #999;
+    font-size: 13px;
+  }
 }
-
-.header-title {
-  font-size: 16px;
-  font-weight: bold;
-}
-
-.update-time {
-  color: #999;
-  font-size: 13px;
-}
-
-/* Stock Grid - More compact */
+/* 今日股票、指数、期货排行 */
 .stock-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 5px;
-}
-
-.stock-item {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
-  gap: 1px;
-  padding: 3px 5px;
-  border-bottom: 1px dashed #eee;
-  line-height: 1.2;
-}
-
-.stock-name {
-  font-weight: bold;
-  font-size: 13px;
-}
-
-.stock-code {
-  color: #999;
-  font-size: 11px;
-  text-align: right;
-}
-
-.stock-price {
-  font-size: 14px;
-  font-weight: bold;
-}
-
-.stock-change {
-  font-size: 11px;
-  text-align: right;
-}
-
-.price-up {
-  color: #f44336;
-}
-
-.price-down {
-  color: #4caf50;
-}
-
-/* Search Section */
-.search-title {
-  font-size: 16px;
-  font-weight: bold;
-  margin-bottom: 10px;
-}
-
-.search-input-wrapper {
   display: flex;
-  margin-bottom: 20px;
-}
+  gap: 10px;
 
-.search-input {
-  width: 100%;
-}
+  .stock-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
 
-/* Adjusted import buttons to be inline */
-.search-buttons {
-  display: flex;
-  white-space: nowrap;
-}
+    .column-title {
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 8px;
+      text-align: center;
+    }
 
-.import-button {
-  padding: 8px 10px;
-  margin: 0;
-  margin-left: -1px;
-  border-radius: 0;
-}
+    .stock-item {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: repeat(2, 1fr);
+      gap: 1px;
+      padding: 3px 5px;
+      border-bottom: 1px dashed #eee;
+      line-height: 1.2;
+      text-align: left;
+      .stock-name {
+        font: {
+          weight: bold;
+          size: 13px;
+        }
+      }
 
-.import-button:first-child {
-  border-right: 0;
-}
+      .stock-code {
+        color: #999;
+        font-size: 11px;
+        text-align: right;
+      }
 
-.import-button:last-child {
-  border-top-right-radius: 4px;
-  border-bottom-right-radius: 4px;
-}
+      .stock-price {
+        font: {
+          size: 14px;
+          weight: bold;
+        }
+      }
 
-/* Three-column layout styling */
+      .stock-change {
+        font-size: 11px;
+        text-align: right;
+      }
+
+      .price-up {
+        color: #f44336;
+      }
+
+      .price-down {
+        color: #4caf50;
+      }
+    }
+  }
+}
+// 可选：添加响应式布局
+@media (max-width: 768px) {
+  .stock-grid {
+    flex-direction: column;
+
+    .stock-column {
+      margin-bottom: 15px;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+}
+// 搜索区域
+.search-card {
+  margin: 0 auto;
+
+  .search-title {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 12px;
+    color: #333;
+  }
+
+  .search-input-wrapper {
+    max-width: 1500px;
+    margin: 0 auto;
+
+    .search-input .el-input__inner {
+      border-radius: 4px !important;
+    }
+  }
+
+  .search-buttons {
+    display: flex;
+    gap: 8px;
+    height: 40px;
+
+    .import-button {
+      flex: 1;
+      padding: 0 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+}
+// 三栏布局容器
 .main-content {
   display: flex;
-  margin-top: 10px;
-}
-
-/* Recent Searches Card */
-.recent-searches-card {
-  height: 100%;
-}
-
-.recent-title {
-  font-size: 16px;
-  font-weight: bold;
-  margin-bottom: 10px;
-}
-
-.search-box {
-  margin-bottom: 10px;
-}
-
-.recent-search-input {
-  width: 100%;
-}
-
-.recent-list {
-  border: 1px solid #eee;
-  border-radius: 4px;
-  max-height: 500px;
-  overflow-y: auto;
-}
-
-.recent-item {
-  display: flex;
-  flex-direction: column;
-  padding: 8px;
-  border-bottom: 1px solid #eee;
-  cursor: pointer;
-}
-
-.recent-item:hover, .recent-item.active {
-  background-color: #f5f7fa;
-}
-
-.item-name {
-  font-weight: bold;
-  font-size: 14px;
-}
-
-.item-code {
-  color: #999;
-  font-size: 12px;
-  margin: 2px 0;
-}
-
-.item-change {
-  font-size: 13px;
-}
-
-/* Stock Detail */
-.stock-detail-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-}
-
-.detail-title {
-  display: flex;
-  align-items: baseline;
-}
-
-.stock-name {
-  font-size: 18px;
-  font-weight: bold;
-  margin-right: 8px;
-}
-
-.stock-current-price {
-  font-size: 22px;
-  font-weight: bold;
-}
-
-.change-percentage {
-  font-size: 14px;
-  margin-left: 8px;
-}
-
-/* Chart */
-.chart-tab-container {
-  margin-bottom: 8px;
-}
-
-.candlestick-chart {
-  height: 350px;
-  width: 100%;
-}
-
-/* Trading Info */
-.trading-info {
-  display: flex;
-  justify-content: space-between;
+  align-items: stretch;
   margin-top: 15px;
-  padding-top: 15px;
-  border-top: 1px solid #eee;
+  .el-col {
+    display: flex;
+    flex-direction: column; // Ensure columns stack vertically
+    height: auto;
+    // 最近导入卡片
+    .recent-searches-card {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+
+      .recent-title {
+        font-size: 16px;
+        font-weight: bold;
+        margin-bottom: 10px;
+      }
+
+      .search-box {
+        margin-bottom: 10px;
+
+        .recent-search-input {
+          width: 100%;
+        }
+      }
+
+      .recent-list {
+        flex: 1;
+        min-height: 300px;
+        border: 1px solid #eee;
+        border-radius: 4px;
+        max-height: 500px;
+        overflow-y: auto;
+
+        .recent-item {
+          display: flex;
+          flex-direction: column;
+          padding: 8px;
+          border-bottom: 1px solid #eee;
+          cursor: pointer;
+
+          &:hover, &.active {
+            background-color: #f5f7fa;
+          }
+
+          .item-name {
+            font-weight: bold;
+            font-size: 14px;
+          }
+
+          .item-code {
+            color: #999;
+            font-size: 12px;
+            margin: 2px 0;
+          }
+
+          .item-change {
+            font-size: 13px;
+          }
+        }
+      }
+    }
+    // 股票详情卡片
+    .stock-detail-card {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+
+      .stock-detail-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+
+        .detail-title {
+          display: flex;
+          align-items: baseline;
+
+          .stock-name {
+            font-size: 18px;
+            font-weight: bold;
+            margin-right: 8px;
+          }
+        }
+
+        .stock-current-price {
+          font-size: 22px;
+          font-weight: bold;
+
+          .change-percentage {
+            font-size: 14px;
+            margin-left: 8px;
+          }
+        }
+      }
+
+      .chart-tab-container {
+        margin-bottom: 8px;
+      }
+
+      .candlestick-chart {
+        height: 350px;
+        width: 100%;
+      }
+
+      .trading-info {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px solid #eee;
+
+        .info-item {
+          text-align: center;
+
+          .info-label {
+            color: #999;
+            font-size: 12px;
+            margin-bottom: 3px;
+          }
+
+          .info-value {
+            font-size: 14px;
+            font-weight: bold;
+          }
+        }
+      }
+    }
+    // 右侧第三列容器
+    &:last-child {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;  // Add gap between cards
+      .news-card, .technical-card {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        max-height: calc(50% - 10px); // 设置最大高度为半高减去间距的一半
+        .card-header {
+          margin-bottom: 10px;
+          .header-title {
+            font-size: 16px;
+            font-weight: bold;
+          }
+        }
+        .news-list, .technical-list {
+          flex: 1;
+          min-height: 120px;
+          max-height: calc(100% - 40px); // 留出标题的空间
+          overflow-y: auto; // 确保垂直滚动
+          scrollbar-width: thin; // 对Firefox有效
+          &::-webkit-scrollbar {
+            width: 6px; // 设置滚动条宽度
+          }
+          &::-webkit-scrollbar-thumb {
+            background-color: #ddd; // 滚动条颜色
+            border-radius: 3px;
+          }
+          &::-webkit-scrollbar-track {
+            background-color: #f5f5f5; // 滚动条轨道颜色
+          }
+          .news-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+            .news-content {
+              margin-bottom: 4px;
+              line-height: 1.4;
+              font-size: 13px;
+            }
+            .news-time {
+              color: #999;
+              font-size: 11px;
+            }
+          }
+          .indicator-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+            .signal-buy { color: #f44336; }
+            .signal-sell { color: #4caf50; }
+            .signal-neutral { color: #ff9800; }
+          }
+        }
+      }
+    }
+  }
 }
 
-.info-item {
-  text-align: center;
-}
-
-.info-label {
-  color: #999;
-  font-size: 12px;
-  margin-bottom: 3px;
-}
-
-.info-value {
-  font-size: 14px;
-  font-weight: bold;
-}
-
-/* News */
-.news-card {
-  margin-bottom: 15px;
-}
-
-.news-item {
-  padding: 8px 0;
-  border-bottom: 1px solid #eee;
-}
-
-.news-content {
-  margin-bottom: 4px;
-  line-height: 1.4;
-  font-size: 13px;
-}
-
-.news-time {
-  color: #999;
-  font-size: 11px;
-}
-
-/* Technical Analysis */
-.technical-card {
-  margin-top: 0;
-}
-
-.indicator-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 8px 0;
-  border-bottom: 1px solid #eee;
-  font-size: 14px;
-}
-
-.signal-buy {
-  color: #f44336;
-}
-
-.signal-sell {
-  color: #4caf50;
-}
-
-.signal-neutral {
-  color: #ff9800;
+@media (max-width: 768px) {
+  .el-col {
+    width: 100%;
+    max-width: 100% !important;
+  }
+  .search-buttons {
+    margin-top: 10px;
+  }
+  .main-content {
+    flex-direction: column;
+  }
+  // 在移动端视图下调整卡片高度
+  .el-col:last-child {
+    .news-card, .technical-card {
+      max-height: 300px;
+      margin-bottom: 15px;
+    }
+  }
 }
 </style>
