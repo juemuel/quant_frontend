@@ -11,31 +11,59 @@
     </el-row>
     <!-- 股票导入 -->
     <el-card class="search-card">
-      <div class="stock-search">
-        <div class="search-title">股票导入</div>
-        <div class="search-input-wrapper">
-          <el-row :gutter="10">
-            <el-col :span="18">
-              <el-input
-                v-model="searchInput"
-                placeholder="请在这里输入代码或名称"
-                class="search-input"
-              />
-            </el-col>
-            <el-col :span="6">
-              <div class="search-buttons">
-                <el-button type="primary" class="import-button">
-                  <el-icon><Document /></el-icon>
-                  文件导入
+      <div class="card-header">
+        <span class="header-title">股票导入</span>
+        <el-tooltip content="支持输入股票代码/名称/简拼进行搜索" placement="top">
+          <el-icon><InfoFilled /></el-icon>
+        </el-tooltip>
+      </div>
+      <div class="search-input-wrapper">
+        <el-row :gutter="10" class="input-group">
+          <el-col :span="18">
+            <el-input
+              v-model="searchInput"
+              placeholder="输入股票代码/名称/简拼"
+              size="large"
+              clearable
+              @keyup.enter="handleCodeImport"
+            >
+              <template #append>
+                <el-button
+                  size="large"
+                  type="primary"
+                  :disabled="!searchInput"
+                  @click="handleCodeImport"
+                >
+                  导入
                 </el-button>
-                <el-button type="success" class="import-button">
-                  <el-icon><Picture /></el-icon>
-                  图片识别
-                </el-button>
-              </div>
-            </el-col>
-          </el-row>
-        </div>
+              </template>
+            </el-input>
+          </el-col>
+          <el-col :span="6">
+            <div class="search-else-buttons">
+              <el-button
+                type="primary"
+                size="large"
+                class="import-button"
+                plain
+                :icon="UploadFilled"
+                @click="showFileDialog = true"
+              >
+                文件导入
+              </el-button>
+              <el-button
+                type="success"
+                size="large"
+                class="import-button"
+                plain
+                :icon="Picture"
+                @click="showImageDialog = true"
+              >
+              图片识别
+              </el-button>
+            </div>
+          </el-col>
+        </el-row>
       </div>
     </el-card>
     <!-- 三栏布局 -->
@@ -157,14 +185,14 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
-import { Document, Picture, Search } from '@element-plus/icons-vue';
+import { Document, Picture, Search, UploadFilled, InfoFilled } from '@element-plus/icons-vue';
 import * as echarts from 'echarts';
 import CarouselCard from '@/components/pc/CarouselCard.vue';
 import { todayMarkets, favoriteMarkets } from '@/mock/home'
+import { ElMessage, ElTooltip } from 'element-plus';
 
 // Data models
-const searchInput = ref('');
-const recentSearchInput = ref('');
+
 const activeChartTab = ref('daily');
 let chart: echarts.ECharts | null = null;
 // 一、今日股票、期货、指数行情数据
@@ -200,6 +228,72 @@ const processTopList = (data: any[], type: 'gainers' | 'losers') => {
 }
 
 // 二、搜索栏数据
+const searchInput = ref('')
+const showResult = ref(false)
+const showFileDialog = ref(false)
+const showImageDialog = ref(false)
+const importResult = ref<any[]>([])
+
+// 处理代码导入
+const handleCodeImport = async () => {
+  try {
+    // 调用识别接口
+    const res = await mockRecognizeApi(searchInput.value)
+    importResult.value = res
+    showResult.value = true
+  } catch (error) {
+    ElMessage.error('识别失败，请检查输入格式')
+  }
+}
+
+// 处理文件上传
+const handleFileUpload = async (file: File) => {
+  try {
+    const res = await mockUploadApi(file, 'file')
+    importResult.value = res
+    showResult.value = true
+  } catch (error) {
+    ElMessage.error('文件解析失败')
+  }
+}
+
+// 处理图片上传
+const handleImageUpload = async (file: File) => {
+  try {
+    const res = await mockUploadApi(file, 'image')
+    importResult.value = res
+    showResult.value = true
+  } catch (error) {
+    ElMessage.error('图片识别失败')
+  }
+}
+// 模拟接口
+const mockRecognizeApi = (code: string) => {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      resolve([{
+        code: '600519',
+        name: '贵州茅台',
+        match: '代码完全匹配'
+      }])
+    }, 500)
+  })
+}
+
+const mockUploadApi = (file: File, type: 'file' | 'image') => {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      resolve([{
+        code: '000001',
+        name: '上证指数',
+        match: type === 'file' ? '文件解析' : '图片识别'
+      }])
+    }, 800)
+  })
+}
+
+// 三
+const recentSearchInput = ref('');
 const recentSearches = ref([
   { name: '贵州茅台', code: '600519', changePercentage: 2.35 },
   { name: '宁德时代', code: '300750', changePercentage: -1.24 },
@@ -207,7 +301,6 @@ const recentSearches = ref([
   { name: '招商银行', code: '600036', changePercentage: -0.45 },
   { name: '比亚迪', code: '002594', changePercentage: 3.56 },
 ]);
-// 三
 const currentStock = ref({
   name: '宁德时代',
   code: '300750',
@@ -336,15 +429,26 @@ function initChart() {
     }
   }
 }
+.el-icon{
+  font-size: 16px;
+}
+::v-deep .el-tooltip__trigger{
+    height: 16px !important;
+    padding-left: 5px;
+}
 // 搜索区域
 .search-card {
   margin: 0 auto;
-
-  .search-title {
-    font-size: 16px;
-    font-weight: bold;
-    margin-bottom: 12px;
-    color: #333;
+  .card-header {
+    text-align: left;
+    margin-bottom: 16px;
+    padding-left: 8px;
+    .header-title {
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 12px;
+      color: #333;
+    }
   }
 
   .search-input-wrapper {
@@ -356,11 +460,10 @@ function initChart() {
     }
   }
 
-  .search-buttons {
+  .search-else-buttons {
     display: flex;
     gap: 8px;
     height: 40px;
-
     .import-button {
       flex: 1;
       padding: 0 12px;
@@ -568,7 +671,7 @@ function initChart() {
     width: 100%;
     max-width: 100% !important;
   }
-  .search-buttons {
+  .search-else-buttons {
     margin-top: 10px;
   }
   .main-content {
