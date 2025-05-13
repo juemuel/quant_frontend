@@ -2,46 +2,12 @@
   <div class="stock-market-container">
     <!-- 市场概况 -->
     <el-row :gutter="20">
-      <el-col :span="8" v-for="(market, index) in processedMarkets" :key="index">
-        <el-card class="market-card">
-          <div class="card-header">
-            <span class="header-title">{{ market.title }}</span>
-            <span class="card-update-time">更新时间: {{ market.updateTime }}</span>
-          </div>
-          <div class="stock-grid">
-            <div class="stock-column">
-              <div class="column-title">涨幅前5</div>
-              <div
-                v-for="(item, itemIndex) in market.topGainers"
-                :key="itemIndex"
-                class="stock-item"
-              >
-                <div class="stock-name">{{ item.name }}</div>
-                <div class="stock-code">{{ item.code }}</div>
-                <div :class="['stock-price', 'price-up']">{{ item.price }}</div>
-                <div :class="['stock-change', 'price-up']">
-                  +{{ item.change }}%
-                </div>
-              </div>
-            </div>
-            <div class="stock-column">
-              <div class="column-title">跌幅前5</div>
-              <div
-                v-for="(item, itemIndex) in market.topLosers"
-                :key="itemIndex"
-                class="stock-item"
-              >
-                <div class="stock-name">{{ item.name }}</div>
-                <div class="stock-code">{{ item.code }}</div>
-                <div :class="['stock-price', 'price-down']">{{ item.price }}</div>
-                <div :class="['stock-change', 'price-down']">
-                  {{ item.change }}%
-                </div>
-              </div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
+      <CarouselCard
+        v-for="(marketGroup, index) in processedMarkets"
+        :key="index"
+        :market-list="marketGroup"
+        :title="['股票', '指数', '期货'][index]"
+      />
     </el-row>
     <!-- 股票导入 -->
     <el-card class="search-card">
@@ -189,79 +155,50 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { Document, Picture, Search } from '@element-plus/icons-vue';
 import * as echarts from 'echarts';
+import CarouselCard from '@/components/pc/CarouselCard.vue';
+import { todayMarkets, favoriteMarkets } from '@/mock/home'
 
 // Data models
 const searchInput = ref('');
 const recentSearchInput = ref('');
 const activeChartTab = ref('daily');
-let chart = null;
+let chart: echarts.ECharts | null = null;
 // 一、今日股票、期货、指数行情数据
-const markets = [
-  {
-    title: '今日股票',
-    data: [
-      { name: '宁德时代', code: '300750', price: '198.56', change: 5.67 },
-      { name: '恒瑞医药', code: '600276', price: '32.45', change: -4.56 },
-      { name: '比亚迪', code: '002594', price: '245.89', change: 4.23 },
-      { name: '隆基股份', code: '601012', price: '45.67', change: -3.89 },
-      { name: '中国平安', code: '601318', price: '45.23', change: 5.86 },
-      { name: '药明康德', code: '603259', price: '78.34', change: -3.43 },
-      { name: '贵州茅台', code: '600519', price: '1689.00', change: 3.35 },
-      { name: '五方控股', code: '300093', price: '18.76', change: -3.12 },
-      { name: '招商银行', code: '600036', price: '35.68', change: 2.98 },
-      { name: '迈瑞医疗', code: '300760', price: '289.45', change: -2.87 },
-    ],
-    updateTime: '2023-07-04 15:30:00',
-  },
-  {
-    title: '今日指数',
-    data: [
-      { name: '新能源指数', code: '399989', price: '2345.67', change: 3.45 },
-      { name: '房地产指数', code: '399393', price: '1234.56', change: 3.21 },
-      { name: '半导体指数', code: '399678', price: '3456.78', change: 2.89 },
-      { name: '银行指数', code: '399986', price: '2345.67', change: -2.87 },
-      { name: '医药指数', code: '399989', price: '4567.89', change: 2.34 },
-      { name: '房地指数', code: '399989', price: '3456.78', change: 2.45 },
-      { name: '消费指数', code: '399997', price: '5678.90', change: -2.12 },
-      { name: '保安指数', code: '399998', price: '4567.89', change: 2.12 },
-      { name: '科技指数', code: '399906', price: '6789.01', change: 1.98 },
-      { name: '创业指数', code: '399987', price: '5678.90', change: -1.98 },
-    ],
-    updateTime: '2023-07-04 15:30:00'
-  },
-  {
-    title: '今日行情',
-    data: [
-      { name: '沪金主力', code: 'AU2312', price: '389.25', change: 4.56 },
-      { name: '螺纹主力', code: '(RB2312', price: '3756.00', change: -3.43 },
-      { name: '沪铜主力', code: 'CU2312', price: '678.90', change: 3.89 },
-      { name: '热卷主力', code: 'HC2312', price: '4567.89', change: -3.12 },
-      { name: '沪铝主力', code: 'AL2312', price: '567.89', change: 3.45 },
-      { name: '焦炭主力', code: 'J2312', price: '2345.67', change: -2.87 },
-      { name: '沪锡主力', code: 'NI2312', price: '156.78', change: 3.13 },
-      { name: '焦煤主力', code: 'JM2312', price: '1678.90', change: -2.45 },
-      { name: '沪镍主力', code: 'SN2312', price: '234.56', change: 2.87 },
-      { name: '铁矿主力', code: 'I2312', price: '890.12', change: -2.12 },
-    ],
-    updateTime: '2023-07-04 15:30:00'
-  }
-]
 const processedMarkets = computed(() => {
-  return markets.map((market) => {
-    const sortedData = [...market.data].sort((a, b) => b.change - a.change);
-    const topGainers = sortedData.filter((item) => item.change > 0).slice(0, 5); // 涨幅前5
-    const topLosers = sortedData.filter((item) => item.change < 0).slice(0, 5); // 跌幅前5
-    return {
-      ...market,
-      topGainers,
-      topLosers,
-    };
-  });
-});
+  // 按市场类型分组
+  const marketTypes = ['stock', 'index', 'futures'] as const
+  return marketTypes.map(type => ([
+    // 今日数据
+    {
+      ...todayMarkets[type],
+      title: `今日${getTypeName(type)}`,
+      topGainers: processTopList(todayMarkets[type].data, 'gainers'),
+      topLosers: processTopList(todayMarkets[type].data, 'losers')
+    },
+    // 自选数据
+    {
+      ...favoriteMarkets[type],
+      title: `自选${getTypeName(type)}`,
+      topGainers: processTopList(favoriteMarkets[type].data, 'gainers'),
+      topLosers: processTopList(favoriteMarkets[type].data, 'losers')
+    }
+  ]))
+})
+const getTypeName = (type: 'stock' | 'index' | 'futures') => {
+  const map = { stock: '股票', index: '指数', futures: '期货' }
+  return map[type]
+}
+const processTopList = (data: any[], type: 'gainers' | 'losers') => {
+  const sorted = [...data].sort((a, b) => type === 'gainers'
+    ? b.change - a.change
+    : a.change - b.change)
+  return sorted.slice(0, 5)
+}
+
 // 二、搜索栏数据
 const recentSearches = ref([
   { name: '贵州茅台', code: '600519', changePercentage: 2.35 },
@@ -384,82 +321,7 @@ function initChart() {
   margin-bottom: 20px;
   border-radius: 4px;
 }
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #eee;
-  margin-bottom: 8px;
-  .header-title {
-    font-size: 16px;
-    font-weight: bold;
-  }
-  .card-update-time {
-    color: #999;
-    font-size: 13px;
-  }
-}
-/* 今日股票、指数、期货排行 */
-.stock-grid {
-  display: flex;
-  gap: 10px;
 
-  .stock-column {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-
-    .column-title {
-      font-size: 14px;
-      font-weight: bold;
-      margin-bottom: 8px;
-      text-align: center;
-    }
-
-    .stock-item {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: repeat(2, 1fr);
-      gap: 1px;
-      padding: 3px 5px;
-      border-bottom: 1px dashed #eee;
-      line-height: 1.2;
-      text-align: left;
-      .stock-name {
-        font: {
-          weight: bold;
-          size: 13px;
-        }
-      }
-
-      .stock-code {
-        color: #999;
-        font-size: 11px;
-        text-align: right;
-      }
-
-      .stock-price {
-        font: {
-          size: 14px;
-          weight: bold;
-        }
-      }
-
-      .stock-change {
-        font-size: 11px;
-        text-align: right;
-      }
-
-      .price-up {
-        color: #f44336;
-      }
-
-      .price-down {
-        color: #4caf50;
-      }
-    }
-  }
-}
 // 可选：添加响应式布局
 @media (max-width: 768px) {
   .stock-grid {
