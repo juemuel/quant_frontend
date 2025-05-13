@@ -31,6 +31,7 @@
                 <el-button
                   size="large"
                   type="primary"
+                  class="import-button"
                   :disabled="!searchInput"
                   @click="handleCodeImport"
                 >
@@ -452,14 +453,24 @@ function initChart() {
   }
 
   .search-input-wrapper {
-    max-width: 1500px;
     margin: 0 auto;
-
+    // min-width: 180px;
     .search-input .el-input__inner {
       border-radius: 4px !important;
     }
+    .import-button{
+      width: 100px;
+      padding: 0 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
   }
 
+  :deep .el-input-group__append{
+    width: 80px;
+    min-width: 80px;
+  }
   .search-else-buttons {
     display: flex;
     gap: 8px;
