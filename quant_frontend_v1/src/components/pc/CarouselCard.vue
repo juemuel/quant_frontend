@@ -1,61 +1,59 @@
 <template>
-    <el-col :span="8">
-      <el-card class="market-card">
-        <!-- <div class="category-title">{{ props.title }}市场</div> -->
-        <el-carousel
-          :interval="props.interval"
-          indicator-position="none"
-          :autoplay="true"
+    <el-card class="market-card">
+    <!-- <div class="category-title">{{ props.title }}市场</div> -->
+    <el-carousel
+        :interval="props.interval"
+        indicator-position="none"
+        :autoplay="true"
+    >
+        <el-carousel-item
+        v-for="market in props.marketList"
+        :key="market.title"
         >
-          <el-carousel-item
-            v-for="market in props.marketList"
-            :key="market.title"
-          >
-            <div class="carousel-content">
-              <div class="card-header">
-                <span class="header-title">{{ market.title }}</span>
-                <span class="update-time">{{ market.updateTime }}</span>
-              </div>
-              <div class="stock-grid">
-                <!-- 涨幅列 -->
-                <div class="stock-column">
-                  <div class="column-title">涨幅前5</div>
-                  <div
-                    v-for="(item, idx) in market.topGainers"
-                    :key="idx"
-                    class="stock-item"
-                  >
-                    <div class="stock-name">{{ item.name }}</div>
-                    <div class="stock-code">{{ item.code }}</div>
-                    <div :class="['stock-price', 'price-up']">{{ item.price }}</div>
-                    <div :class="['stock-change', 'price-up']">
-                    {{ item.change }}%
-                    </div>
-                  </div>
-                </div>
-                <!-- 跌幅列 -->
-                <div class="stock-column">
-                  <div class="column-title">跌幅前5</div>
-                  <div
-                    v-for="(item, idx) in market.topLosers"
-                    :key="idx"
-                    class="stock-item"
-                  >
-                    <div class="stock-name">{{ item.name }}</div>
-                    <div class="stock-code">{{ item.code }}</div>
-                    <div :class="['stock-price', 'price-down']">{{ item.price }}</div>
-                    <div :class="['stock-change', 'price-down']">
-                    {{ item.change }}%
-                    </div>
-                  </div>
-                </div>
-              </div>
+        <div class="carousel-content">
+            <div class="card-header">
+            <span class="header-title">{{ market.title }}</span>
+            <span class="update-time">{{ market.updateTime }}</span>
             </div>
-          </el-carousel-item>
-        </el-carousel>
-      </el-card>
-    </el-col>
-  </template>
+            <div class="stock-grid">
+            <!-- 涨幅列 -->
+            <div class="stock-column">
+                <div class="column-title">涨幅前5</div>
+                <div
+                v-for="(item, idx) in market.topGainers"
+                :key="idx"
+                class="stock-item"
+                >
+                <div class="stock-name">{{ item.name }}</div>
+                <div class="stock-code">{{ item.code }}</div>
+                <div :class="['stock-price', 'price-up']">{{ item.price }}</div>
+                <div :class="['stock-change', 'price-up']">
+                {{ item.change }}%
+                </div>
+                </div>
+            </div>
+            <!-- 跌幅列 -->
+            <div class="stock-column">
+                <div class="column-title">跌幅前5</div>
+                <div
+                v-for="(item, idx) in market.topLosers"
+                :key="idx"
+                class="stock-item"
+                >
+                <div class="stock-name">{{ item.name }}</div>
+                <div class="stock-code">{{ item.code }}</div>
+                <div :class="['stock-price', 'price-down']">{{ item.price }}</div>
+                <div :class="['stock-change', 'price-down']">
+                {{ item.change }}%
+                </div>
+                </div>
+            </div>
+            </div>
+        </div>
+        </el-carousel-item>
+    </el-carousel>
+    </el-card>
+</template>
 <script setup lang="ts">
 import { ref, defineProps, onMounted, PropType } from 'vue'
 import { ElCarousel, ElCarouselItem } from 'element-plus'
@@ -65,10 +63,10 @@ const props = defineProps({
     title: String,
     marketList: {
         type: Array as PropType<Array<{
-        title: string
-        updateTime: string
-        topGainers: any[]
-        topLosers: any[]
+            title: string
+            updateTime: string
+            topGainers: any[]
+            topLosers: any[]
         }>>,
         required: true
     },
@@ -83,6 +81,8 @@ onMounted(()=>{
 </script>
 <style lang="scss" scoped>
 .market-card {
+  width: 100%;
+  min-width: 380px; // 固定最小宽度
   margin-bottom: 20px;
   border-radius: 4px;
   position: relative;
