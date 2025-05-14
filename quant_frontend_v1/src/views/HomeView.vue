@@ -316,13 +316,14 @@ $card-min-width: 380px;
 }
 // 市场概览区域
 .market-row{
-  margin: 0 0 !important;
+  margin: 0 auto !important;
   width: 100%; // 保证卡片在视口较宽时填满空间
   display: flex;
   flex-wrap: wrap; // 允许 el-col 自动换行
   justify-content: space-between;
   margin-bottom: 20px;
   .card-col {
+    padding: 0 0 !important;
     min-width: $card-min-width; // 每个卡片最小宽度
     max-width: 100%;   // 在极窄设备上允许单列撑满
     flex: 1 0 $card-min-width;   // 弹性伸缩，基础宽度为 380px
@@ -334,7 +335,7 @@ $card-min-width: 380px;
 }
 // 搜索区域
 .search-card {
-  margin: 0 auto;
+  margin: 0 auto !important;
   width: 100%; // 保证卡片在视口较宽时填满空间
   display: flex;
   flex-wrap: wrap; // 允许 el-col 自动换行
@@ -385,7 +386,7 @@ $card-min-width: 380px;
 }
 // 三栏布局容器
 .main-content {
-  margin: 0 auto;
+  margin: 0 auto !important;
   width: 100%; // 保证卡片在视口较宽时填满空间
   display: flex;
   flex-wrap: wrap; // 允许 el-col 自动换行
@@ -394,6 +395,7 @@ $card-min-width: 380px;
   .stock-detail-card,
   .news-card,
   .technical-card {
+    padding: 0 0 !important;
     width: 100%; // 占满父容器
     box-sizing: border-box;
   }
