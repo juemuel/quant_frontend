@@ -1,17 +1,9 @@
 <template>
   <div class="stock-market-container">
     <!-- 市场概况 -->
-    <el-row :gutter="20" class="market-row">
-      <el-col
-        v-for="(marketGroup, index) in processedMarkets"
-        :key="index"
-        :span="8"
-        class="card-col"
-      >
-        <CarouselCard
-          :market-list="marketGroup"
-          :title="['股票', '指数', '期货'][index]"
-        />
+    <el-row class="market-row">
+      <el-col v-for="(marketGroup, index) in processedMarkets" :key="index" :span="8" class="card-col">
+        <CarouselCard :market-list="marketGroup" :title="['股票', '指数', '期货'][index]" />
       </el-col>
     </el-row>
     <!-- 股票导入 -->
@@ -19,50 +11,30 @@
       <div class="card-header">
         <span class="header-title">股票导入</span>
         <el-tooltip content="支持输入股票代码/名称/简拼进行搜索" placement="top">
-          <el-icon><InfoFilled /></el-icon>
+          <el-icon>
+            <InfoFilled />
+          </el-icon>
         </el-tooltip>
       </div>
       <!-- 改用flex容器代替el-row -->
       <div class="input-group input-actions">
         <div class="input-wrap">
-          <el-input
-            v-model="searchInput"
-            placeholder="输入股票代码/名称/简拼"
-            size="large"
-            clearable
-            @keyup.enter="handleCodeImport"
-          >
+          <el-input v-model="searchInput" placeholder="输入股票代码/名称/简拼" size="large" clearable
+            @keyup.enter="handleCodeImport">
             <template #append>
-              <el-button
-                type="primary"
-                class="import-button"
-                :disabled="!searchInput"
-                @click="handleCodeImport"
-              >
+              <el-button type="primary" class="import-button" :disabled="!searchInput" @click="handleCodeImport">
                 导入
               </el-button>
             </template>
           </el-input>
         </div>
         <div class="button-wrap">
-          <el-button
-            class="import-button"
-            type="primary"
-            size="large"
-            plain
-            :icon="UploadFilled"
-            @click="showFileDialog = true"
-          >
+          <el-button class="import-button" type="primary" size="large" plain :icon="UploadFilled"
+            @click="showFileDialog = true">
             文件导入
           </el-button>
-          <el-button
-            class="import-button"
-            type="success"
-            size="large"
-            plain
-            :icon="Picture"
-            @click="showImageDialog = true"
-          >
+          <el-button class="import-button" type="success" size="large" plain :icon="Picture"
+            @click="showImageDialog = true">
             图片识别
           </el-button>
         </div>
@@ -71,35 +43,45 @@
     <!-- 三栏布局 -->
     <el-row :gutter="20" class="main-content">
       <!-- 最近导入列表 -->
-      <RecentItemsCard :recent-searches="recentSearches" :current-stock="currentStock" :search-input="recentSearchInput" />
-      <!--图形区 -->
-      <StockDetailCard :stock="currentStock"/>
-      <!--相关资讯与技术分析 -->
-      <el-col :span="6">
-        <el-card class="news-card">
-          <div class="card-header">
-            <span class="header-title">相关资讯</span>
-          </div>
-          <div class="news-list">
-            <div v-for="(news, index) in relatedNews" :key="index" class="news-item">
-              <div class="news-content">{{ news.content }}</div>
-              <div class="news-time">{{ news.time }}</div>
+      <el-col :xs="24" :sm="24" :md="6" :lg="4" :xl="4">
+        <RecentItemsCard :recent-searches="recentSearches" :current-stock="currentStock"
+          :search-input="recentSearchInput" />
+      </el-col>
+
+      <!-- 图形区 -->
+      <el-col :xs="24" :sm="24" :md="12" :lg="14" :xl="14">
+        <StockDetailCard :stock="currentStock" />
+      </el-col>
+
+      <!-- 右侧双卡片：相关资讯 + 技术分析 -->
+      <el-col :xs="24" :sm="24" :md="6" :lg="6" :xl="6">
+        <div class="right-column">
+          <el-card class="news-card">
+            <div class="card-header">
+              <span class="header-title">相关资讯</span>
             </div>
-          </div>
-        </el-card>
-        <el-card class="technical-card">
-          <div class="card-header">
-            <span class="header-title">技术分析</span>
-          </div>
-          <div class="technical-list">
-            <div v-for="(indicator, index) in technicalIndicators" :key="index" class="indicator-item">
-              <span class="indicator-name">{{ indicator.name }}</span>
-              <span :class="['indicator-signal', getSignalClass(indicator.signal)]">
-                {{ indicator.signal }}
-              </span>
+            <div class="news-list">
+              <div v-for="(news, index) in relatedNews" :key="index" class="news-item">
+                <div class="news-content">{{ news.content }}</div>
+                <div class="news-time">{{ news.time }}</div>
+              </div>
             </div>
-          </div>
-        </el-card>
+          </el-card>
+
+          <el-card class="technical-card">
+            <div class="card-header">
+              <span class="header-title">技术分析</span>
+            </div>
+            <div class="technical-list">
+              <div v-for="(indicator, index) in technicalIndicators" :key="index" class="indicator-item">
+                <span class="indicator-name">{{ indicator.name }}</span>
+                <span :class="['indicator-signal', getSignalClass(indicator.signal)]">
+                  {{ indicator.signal }}
+                </span>
+              </div>
+            </div>
+          </el-card>
+        </div>
       </el-col>
     </el-row>
   </div>
@@ -286,41 +268,20 @@ $card-min-width: 380px;
   font-family: Arial, sans-serif;
 }
 /* Market Cards */
-.market-card, .search-card, .stock-detail-card, .news-card, .technical-card, .recent-searches-card {
+.market-card, .search-card {
   margin-bottom: 20px;
   border-radius: 4px;
   min-width: $card-min-width;
 }
 
-// 可选：添加响应式布局
-@media (max-width: 768px) {
-  .market-row {
-    flex-direction: column;
-    align-items: stretch;
-
-    .card-col {
-      width: 100%;
-      max-width: 100%;
-    }
-  }
-  .search-card .input-actions {
-    flex-direction: column;
-    align-items: stretch;
-
-    .input-wrap,
-    .button-wrap {
-      width: 100%;
-      flex: none;
-    }
-  }
-}
-// 市场概览区域
+// 1. 市场概览区域
 .market-row{
   margin: 0 auto !important;
   width: 100%; // 保证卡片在视口较宽时填满空间
   display: flex;
   flex-wrap: wrap; // 允许 el-col 自动换行
-  justify-content: space-between;
+  gap: 20px;
+  justify-content: flex-start;
   margin-bottom: 20px;
   .card-col {
     padding: 0 0 !important;
@@ -333,19 +294,28 @@ $card-min-width: 380px;
     flex-wrap: wrap;
   }
 }
-// 搜索区域
+// 可选：添加响应式布局
+@media (max-width: 768px) {
+  .market-row {
+    flex-direction: column;
+    align-items: stretch;
+
+    .card-col {
+      width: 100%;
+      max-width: 100%;
+    }
+  }
+}
+// 2. 搜索区域
 .search-card {
-  margin: 0 auto !important;
-  width: 100%; // 保证卡片在视口较宽时填满空间
-  display: flex;
-  flex-wrap: wrap; // 允许 el-col 自动换行
   margin-bottom: 20px;
+  width: 100%; // 保证卡片在视口较宽时填满空间
+  flex-wrap: wrap; // 允许 el-col 自动换行
   .card-header {
+    flex: 1 0 100%;
+    max-width: 100%;
     text-align: left;
-    margin-bottom: 16px;
-    padding-left: 8px;
-    width: auto;
-    max-width: 40%;
+    margin-bottom: 10px;
     .header-title {
       font-size: 16px;
       font-weight: bold;
@@ -357,7 +327,6 @@ $card-min-width: 380px;
     display: flex;
     flex-wrap: wrap; // 允许子元素换行
     gap: 10px;
-    min-width: 340px;
     .input-wrap {
       flex: 1 1 340px; // 至少占 450px，可伸缩
       min-width: 340px;
@@ -384,129 +353,93 @@ $card-min-width: 380px;
     }
   }
 }
+// 可选：添加响应式布局
+@media (max-width: 768px) {
+  .search-card .input-actions {
+    flex-direction: column;
+    align-items: stretch;
+
+    .input-wrap,
+    .button-wrap {
+      width: 100%;
+      flex: none;
+    }
+  }
+}
 // 三栏布局容器
 .main-content {
-  margin: 0 auto !important;
-  width: 100%; // 保证卡片在视口较宽时填满空间
-  display: flex;
-  flex-wrap: wrap; // 允许 el-col 自动换行
   margin-bottom: 20px;
-  .recent-searches-card,
-  .stock-detail-card,
+  width: 100%;
+  .right-column {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
   .news-card,
   .technical-card {
-    padding: 0 0 !important;
-    width: 100%; // 占满父容器
     box-sizing: border-box;
+    padding: 0 !important;
+    width: 100%;
   }
 
   @media (min-width: 992px) {
-    .recent-searches-card {
+    .el-col:nth-child(1) {
       flex: 0 0 20%;
     }
 
-    .stock-detail-card {
+    // recent searches
+    .el-col:nth-child(2) {
       flex: 0 0 50%;
     }
 
-    .news-card,
-    .technical-card {
+    // chart area
+    .el-col:nth-child(3) {
       flex: 0 0 25%;
     }
+
+    // news & indicators
   }
 
   @media (max-width: 992px) {
-    flex-direction: column;
+    .right-column {
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
 
-    .recent-searches-card,
-    .stock-detail-card,
+    .news-card,
+    .technical-card {
+      flex: 1 1 48%;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .right-column {
+      flex-direction: column;
+    }
+
     .news-card,
     .technical-card {
       flex: 1 1 auto;
-      margin-bottom: 15px;
+      max-height: 300px;
+      overflow-y: auto;
     }
   }
-
-//   // 股票详情卡片
-
-//   // 右侧第三列容器
-//   &:last-child {
-//     display: flex;
+}
+// @media (max-width: 768px) {
+//   .main-content {
 //     flex-direction: column;
-//     gap: 15px;  // Add gap between cards
+//   }
+//   .el-col {
+//     width: 100%;
+//     max-width: 100% !important;
+//   }
+//   // 在移动端视图下调整卡片高度
+//   .el-col:last-child {
 //     .news-card, .technical-card {
-//       flex: 1;
-//       display: flex;
-//       flex-direction: column;
-//       max-height: calc(50% - 10px); // 设置最大高度为半高减去间距的一半
-//       .card-header {
-//         margin-bottom: 10px;
-//         .header-title {
-//           font-size: 16px;
-//           font-weight: bold;
-//         }
-//       }
-//       .news-list, .technical-list {
-//         flex: 1;
-//         min-height: 120px;
-//         max-height: calc(100% - 40px); // 留出标题的空间
-//         overflow-y: auto; // 确保垂直滚动
-//         scrollbar-width: thin; // 对Firefox有效
-//         &::-webkit-scrollbar {
-//           width: 6px; // 设置滚动条宽度
-//         }
-//         &::-webkit-scrollbar-thumb {
-//           background-color: #ddd; // 滚动条颜色
-//           border-radius: 3px;
-//         }
-//         &::-webkit-scrollbar-track {
-//           background-color: #f5f5f5; // 滚动条轨道颜色
-//         }
-//         .news-item {
-//           padding: 8px 0;
-//           border-bottom: 1px solid #eee;
-//           .news-content {
-//             margin-bottom: 4px;
-//             line-height: 1.4;
-//             font-size: 13px;
-//           }
-//           .news-time {
-//             color: #999;
-//             font-size: 11px;
-//           }
-//         }
-//         .indicator-item {
-//           display: flex;
-//           justify-content: space-between;
-//           padding: 8px 0;
-//           border-bottom: 1px solid #eee;
-//           font-size: 14px;
-//           .signal-buy { color: #f44336; }
-//           .signal-sell { color: #4caf50; }
-//           .signal-neutral { color: #ff9800; }
-//         }
-//       }
+//       max-height: 300px;
+//       margin-bottom: 15px;
 //     }
 //   }
-}
-
-@media (max-width: 768px) {
-  .el-col {
-    width: 100%;
-    max-width: 100% !important;
-  }
-  .search-else-buttons {
-    margin-top: 10px;
-  }
-  .main-content {
-    flex-direction: column;
-  }
-  // 在移动端视图下调整卡片高度
-  .el-col:last-child {
-    .news-card, .technical-card {
-      max-height: 300px;
-      margin-bottom: 15px;
-    }
-  }
-}
+// }
 </style>

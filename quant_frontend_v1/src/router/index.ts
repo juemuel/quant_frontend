@@ -126,12 +126,14 @@ router.beforeEach((to, from, next) => {
   } else {
     const Authorization = localStorage.getItem('Authorization');
     console.log('Authorization', Authorization)
-    if (Authorization === null || Authorization === '' || Authorization === undefined || Authorization === 'undefined') {
-      ElMessage.error('请先登录');
-      next('/login01');
-    } else {
-      next();
-    }
+    // if (Authorization === null || Authorization === '' || Authorization === undefined || Authorization === 'undefined') {
+    //   ElMessage.error('请先登录');
+    //   next('/login01');
+    // } else {
+    //   next();
+    // }
+
+    next();
   }
 });
 export default router
