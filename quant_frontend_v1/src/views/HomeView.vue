@@ -1,11 +1,11 @@
 <template>
   <div class="stock-market-container">
     <!-- 市场概况 -->
-    <el-row class="market-row">
-      <el-col v-for="(marketGroup, index) in processedMarkets" :key="index" :span="8" class="card-col">
+    <div class="market-row">
+      <div v-for="(marketGroup, index) in processedMarkets" :key="index" :span="8" class="card-col">
         <CarouselCard :market-list="marketGroup" :title="['股票', '指数', '期货'][index]" />
-      </el-col>
-    </el-row>
+      </div>
+    </div>
     <!-- 股票导入 -->
     <el-card class="search-card">
       <div class="card-header">
@@ -41,20 +41,20 @@
       </div>
     </el-card>
     <!-- 三栏布局 -->
-    <el-row :gutter="20" class="main-content">
+    <div class="main-content">
       <!-- 最近导入列表 -->
-      <el-col :xs="24" :sm="24" :md="6" :lg="4" :xl="4">
+      <div class="sidebar">
         <RecentItemsCard :recent-searches="recentSearches" :current-stock="currentStock"
           :search-input="recentSearchInput" />
-      </el-col>
+      </div>
 
       <!-- 图形区 -->
-      <el-col :xs="24" :sm="24" :md="12" :lg="14" :xl="14">
+      <div class="main">
         <StockDetailCard :stock="currentStock" />
-      </el-col>
+      </div>
 
-      <!-- 右侧双卡片：相关资讯 + 技术分析 -->
-      <el-col :xs="24" :sm="24" :md="6" :lg="6" :xl="6">
+      <!-- 右侧双卡片 -->
+      <div class="right-panel">
         <div class="right-column">
           <el-card class="news-card">
             <div class="card-header">
@@ -82,8 +82,8 @@
             </div>
           </el-card>
         </div>
-      </el-col>
-    </el-row>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -263,12 +263,12 @@ $card-min-width: 380px;
     padding-left: 5px;
 }
 .stock-market-container {
-  padding: 20px 100px 20px 100px;
+  padding: 32px;
   background-color: #f5f7fa;
   font-family: Arial, sans-serif;
 }
 /* Market Cards */
-.market-card, .search-card {
+.market-card, .search-card, .recent-searches-card, .stock-detail-card, .news-card, .technical-card{
   margin-bottom: 20px;
   border-radius: 4px;
   min-width: $card-min-width;
@@ -276,19 +276,34 @@ $card-min-width: 380px;
 
 // 1. 市场概览区域
 .market-row{
-  margin: 0 auto !important;
-  width: 100%; // 保证卡片在视口较宽时填满空间
+  width: 100%;
+  // 3. 采用flex、glap，避免使用el-row、el-col导致冲突
   display: flex;
-  flex-wrap: wrap; // 允许 el-col 自动换行
-  gap: 20px;
+  flex-wrap: wrap;
+  gap: 0 20px;
   justify-content: flex-start;
   margin-bottom: 20px;
   .card-col {
     padding: 0 0 !important;
     min-width: $card-min-width; // 每个卡片最小宽度
     max-width: 100%;   // 在极窄设备上允许单列撑满
-    flex: 1 0 $card-min-width;   // 弹性伸缩，基础宽度为 380px
+    flex: 1 0 $card-min-width;   // 保持最小宽度并自适应弹性伸缩，基础宽度为 380px
   }
+  // 1. 换行情况下无法处理右侧空隙
+  // .card-col {
+  //   margin-right: 20px;
+  // }
+  // .card-col:last-child {
+  //   margin-right: 0;
+  // }
+
+  // 2. 换行情况下无法处理左侧空隙
+  // .card-col:last-child {
+  //   margin-right: 0;
+  // }
+  // .card-col:not(:first-child) {
+  //   margin-left: 10px; /* 仅对非首元素添加左间距 */
+  // }
   :deep(.el-row__wrapper) {
     display: flex;
     flex-wrap: wrap;
@@ -368,48 +383,29 @@ $card-min-width: 380px;
 }
 // 三栏布局容器
 .main-content {
-  margin-bottom: 20px;
+  display: grid;
+  gap: 20px;
   width: 100%;
-  .right-column {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-  }
-  .news-card,
-  .technical-card {
-    box-sizing: border-box;
-    padding: 0 !important;
-    width: 100%;
-  }
-
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  // 默认三栏布局（桌面）
   @media (min-width: 992px) {
-    .el-col:nth-child(1) {
-      flex: 0 0 20%;
-    }
-
-    // recent searches
-    .el-col:nth-child(2) {
-      flex: 0 0 50%;
-    }
-
-    // chart area
-    .el-col:nth-child(3) {
-      flex: 0 0 25%;
-    }
-
-    // news & indicators
+    grid-template-columns: 2fr 5fr 3fr; // 比例为 2:5:3，共占满 100%
+    align-items: stretch; // 关键点：所有子项高度一致
   }
 
+  // 移动端适配
   @media (max-width: 992px) {
+    grid-template-columns: 100%;
     .right-column {
-      flex-direction: row;
+      display: flex;
       flex-wrap: wrap;
       gap: 10px;
     }
-
     .news-card,
     .technical-card {
       flex: 1 1 48%;
+      width: 48%;
     }
   }
 
@@ -417,29 +413,25 @@ $card-min-width: 380px;
     .right-column {
       flex-direction: column;
     }
-
     .news-card,
     .technical-card {
       flex: 1 1 auto;
       max-height: 300px;
       overflow-y: auto;
+      width: 100%;
     }
   }
 }
-// @media (max-width: 768px) {
-//   .main-content {
-//     flex-direction: column;
-//   }
-//   .el-col {
-//     width: 100%;
-//     max-width: 100% !important;
-//   }
-//   // 在移动端视图下调整卡片高度
-//   .el-col:last-child {
-//     .news-card, .technical-card {
-//       max-height: 300px;
-//       margin-bottom: 15px;
-//     }
-//   }
-// }
+.sidebar,
+.main,
+.right-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 350px; // 可选：防止内容太少时卡片太矮
+  background-color: #fff;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  min-width: $card-min-width;
+}
 </style>
