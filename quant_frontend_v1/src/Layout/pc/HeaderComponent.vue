@@ -1,9 +1,14 @@
 <template>
   <div class="header-container">
-    <el-breadcrumb separator="/" class="breadcrumb">
-      <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
-    </el-breadcrumb>
-    <div class="drop-down">
+    <!-- 左侧：面包屑 -->
+    <div class="breadcrumb-wrapper">
+      <el-breadcrumb separator="/" class="breadcrumb">
+        <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+      </el-breadcrumb>
+    </div>
+
+    <!-- 右侧：用户信息 -->
+    <div class="user-info">
       <el-dropdown>
         <span class="el-dropdown-link">
           用户：{{ data.username }}
@@ -40,22 +45,32 @@ function logonOut () {
 </script>
 <style scoped lang="scss">
 .header-container {
-  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   width: 100%;
-  height: 45px;
-  background: #fff;
-}
+  height: 60px; // 统一高度
+  padding: 0 20px;
+  background-color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+  z-index: 1000;
 
-.breadcrumb {
-  position: absolute;
-  top: 15px;
-  left: 15px;
-}
+  .breadcrumb-wrapper {
+    font-size: 14px;
+    color: #666;
+  }
 
-.drop-down {
-  position: absolute;
-  right: 10px;
-  top: 10px;
-  cursor: pointer;
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    .el-dropdown-link {
+      font-size: 14px;
+      color: #333;
+      cursor: pointer;
+    }
+  }
 }
 </style>

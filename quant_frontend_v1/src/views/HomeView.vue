@@ -41,7 +41,7 @@
       </div>
     </el-card>
     <!-- 三栏布局 -->
-    <div class="main-content">
+    <div class="three-columnm-content">
       <!-- 最近导入列表 -->
       <div class="sidebar">
         <RecentItemsCard :recent-searches="recentSearches" :current-stock="currentStock"
@@ -55,33 +55,31 @@
 
       <!-- 右侧双卡片 -->
       <div class="right-panel">
-        <div class="right-column">
-          <el-card class="news-card">
-            <div class="card-header">
-              <span class="header-title">相关资讯</span>
+        <el-card class="news-card">
+          <div class="card-header">
+            <span class="header-title">相关资讯</span>
+          </div>
+          <div class="news-list">
+            <div v-for="(news, index) in relatedNews" :key="index" class="news-item">
+              <div class="news-content">{{ news.content }}</div>
+              <div class="news-time">{{ news.time }}</div>
             </div>
-            <div class="news-list">
-              <div v-for="(news, index) in relatedNews" :key="index" class="news-item">
-                <div class="news-content">{{ news.content }}</div>
-                <div class="news-time">{{ news.time }}</div>
-              </div>
-            </div>
-          </el-card>
+          </div>
+        </el-card>
 
-          <el-card class="technical-card">
-            <div class="card-header">
-              <span class="header-title">技术分析</span>
+        <el-card class="technical-card">
+          <div class="card-header">
+            <span class="header-title">技术分析</span>
+          </div>
+          <div class="technical-list">
+            <div v-for="(indicator, index) in technicalIndicators" :key="index" class="indicator-item">
+              <span class="indicator-name">{{ indicator.name }}</span>
+              <span :class="['indicator-signal', getSignalClass(indicator.signal)]">
+                {{ indicator.signal }}
+              </span>
             </div>
-            <div class="technical-list">
-              <div v-for="(indicator, index) in technicalIndicators" :key="index" class="indicator-item">
-                <span class="indicator-name">{{ indicator.name }}</span>
-                <span :class="['indicator-signal', getSignalClass(indicator.signal)]">
-                  {{ indicator.signal }}
-                </span>
-              </div>
-            </div>
-          </el-card>
-        </div>
+          </div>
+        </el-card>
       </div>
     </div>
   </div>
@@ -200,6 +198,12 @@ const recentSearches = ref([
   { name: '中国平安', code: '601318', changePercentage: 0.86 },
   { name: '招商银行', code: '600036', changePercentage: -0.45 },
   { name: '比亚迪', code: '002594', changePercentage: 3.56 },
+  { name: '中国平安', code: '601318', changePercentage: 0.86 },
+  { name: '招商银行', code: '600036', changePercentage: -0.45 },
+  { name: '比亚迪', code: '002594', changePercentage: 3.56 },
+  { name: '中国平安', code: '601318', changePercentage: 0.86 },
+  { name: '招商银行', code: '600036', changePercentage: -0.45 },
+  { name: '比亚迪', code: '002594', changePercentage: 3.56 },
 ]);
 const currentStock = ref({
   name: '宁德时代',
@@ -268,12 +272,13 @@ $card-min-width: 380px;
   font-family: Arial, sans-serif;
 }
 /* Market Cards */
-.market-card, .search-card, .recent-searches-card, .stock-detail-card, .news-card, .technical-card{
-  margin-bottom: 20px;
+.market-card, .search-card,.stock-detail-card, .news-card, .technical-card{
   border-radius: 4px;
   min-width: $card-min-width;
 }
-
+.recent-searches-card, .sidebar{
+  min-width: $card-min-width/2;
+}
 // 1. 市场概览区域
 .market-row{
   width: 100%;
@@ -382,45 +387,166 @@ $card-min-width: 380px;
   }
 }
 // 三栏布局容器
-.main-content {
+.three-columnm-content {
   display: grid;
   gap: 20px;
   width: 100%;
   margin-bottom: 20px;
   flex-wrap: wrap;
+  .right-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    height: 100%; // 继承主内容区高度
+    .news-card,
+    .technical-card {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      width: 100%; // 👈 关键点：强制卡片撑满 right-panel 宽度
+      height: 100%; // 让卡片填满父容器
+      min-height: 200px;
+      max-height: 400px; // 控制卡片最大高度
+      border-radius: 6px;
+      overflow-y: auto;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+      .card-header {
+        padding: 12px 16px;
+        border-bottom: 1px solid #eee;
+        .header-title {
+          font-size: 15px;
+          font-weight: bold;
+          color: #333;
+        }
+      }
+      .news-list,
+      .technical-list {
+        padding: 10px 16px;
+        /* 不需要设置 height: 100%，flex: 1 就够了 */
+        flex: 1 1 auto;
+        min-height: 120px;
+      }
+    }
+
+    .news-item {
+      display: flex;
+      flex-direction: column;
+      padding: 8px 0;
+      border-bottom: 1px solid #eee;
+      .news-content {
+        font-size: 13px;
+        line-height: 1.4;
+        text-align: left;
+      }
+      .news-time {
+        font-size: 11px;
+        color: #999;
+        text-align: right;
+        margin-top: 4px;
+      }
+    }
+    .indicator-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid #eee;
+      .indicator-name {
+        font-size: 14px;
+        color: #333;
+      }
+      .indicator-signal {
+        font-weight: bold;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 13px;
+      }
+      .signal-buy {
+        color: #f44336;
+        background-color: #ffebee;
+      }
+      .signal-sell {
+        color: #4caf50;
+        background-color: #e8f5e9;
+      }
+      .signal-neutral {
+        color: #ff9800;
+        background-color: #fff8e1;
+      }
+    }
+  }
   // 默认三栏布局（桌面）
   @media (min-width: 992px) {
     grid-template-columns: 2fr 5fr 3fr; // 比例为 2:5:3，共占满 100%
     align-items: stretch; // 关键点：所有子项高度一致
   }
 
-  // 移动端适配
-  @media (max-width: 992px) {
-    grid-template-columns: 100%;
-    .right-column {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-    .news-card,
-    .technical-card {
-      flex: 1 1 48%;
-      width: 48%;
-    }
-  }
+  // // 移动端适配
+  // // 中等及以下屏幕：A | B 在一行，C 单独一行
+  // @media (max-width: 991px) {
+  //   grid-template-columns: repeat(2, 1fr);
+  //   grid-auto-rows: minmax(300px, auto);
+  //   // grid-template-columns: minmax(200px, 1fr) minmax(300px, 3fr); // 更精细的最小宽度控制
+  //   .sidebar {
+  //     grid-column: span 1; // 左侧占 1 列
+  //   }
 
-  @media (max-width: 768px) {
-    .right-column {
+  //   .main {
+  //     grid-column: span 1; // 中间占 1 列
+  //   }
+
+  //   .right-panel {
+  //     grid-column: span 2; // 右侧双卡片横跨两列
+  //     width: 100%;
+  //     margin-top: 20px;
+  //   }
+  // }
+  // 移动端适配
+  // 中等及以下屏幕：A | B 在一行，C 单独一行
+  @media (max-width: 991px) {
+    .three-columnm-content {
+      grid-template-columns: none; // 禁用 Grid 布局
+      display: flex;
       flex-direction: column;
+      gap: 0;
     }
-    .news-card,
-    .technical-card {
-      flex: 1 1 auto;
-      max-height: 300px;
-      overflow-y: auto;
+
+    .sidebar,
+    .main {
       width: 100%;
+      max-width: 100%;
+      flex-shrink: 0;
+    }
+
+    .sidebar {
+      order: 1;
+      // margin-bottom: 10px;
+    }
+
+    .main {
+      order: 2;
+      width: 100%;
+      min-height: 300px;
+    }
+
+    .right-panel {
+      order: 3;
+      grid-column: span 2;
+      width: 100%;
+      margin-top: 20px;
     }
   }
+  // 小屏幕：全部垂直堆叠，并调整宽度
+  // @media (max-width: 767px) {
+  //   grid-template-columns: 1fr;
+  //   .right-panel .news-card,
+  //   .right-panel .technical-card {
+  //     width: 100%;
+  //     max-height: 300px;
+  //     overflow-y: auto;
+  //   }
+  // }
 }
 .sidebar,
 .main,
@@ -428,10 +554,8 @@ $card-min-width: 380px;
   display: flex;
   flex-direction: column;
   min-height: 350px; // 可选：防止内容太少时卡片太矮
-  background-color: #fff;
   border-radius: 6px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   overflow: hidden;
-  min-width: $card-min-width;
 }
 </style>

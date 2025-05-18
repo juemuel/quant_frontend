@@ -1,5 +1,5 @@
 <template>
-  <div class="sidebar-container">
+  <div class="page-container">
     <el-container style="height: 100%;">
       <el-aside class="side-bar" :class="{ 'is-collapsed': isCollapse }">
         <div class="title" :class="{ 'is-collapsed': isCollapse }">{{ isCollapse ? 'Jue' : 'Juemuel\'s Workspace' }}</div>
@@ -73,7 +73,7 @@ const toggleSideBar = () => {
 .title.is-collapsed {
   font-size: 20px;
 }
-.sidebar-container {
+.page-container {
   height: 100%;
 }
 .side-bar {
