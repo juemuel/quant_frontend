@@ -277,7 +277,7 @@ $card-min-width: 380px;
   min-width: $card-min-width;
 }
 .recent-searches-card, .sidebar{
-  min-width: $card-min-width/2;
+  min-width: $card-min-width/3;
 }
 // 1. 市场概览区域
 .market-row{
@@ -392,7 +392,7 @@ $card-min-width: 380px;
   gap: 20px;
   width: 100%;
   margin-bottom: 20px;
-  flex-wrap: wrap;
+  // flex-wrap: wrap; // 在
   .right-panel {
     display: flex;
     flex-direction: column;
@@ -478,30 +478,9 @@ $card-min-width: 380px;
   }
   // 默认三栏布局（桌面）
   @media (min-width: 992px) {
-    grid-template-columns: 2fr 5fr 3fr; // 比例为 2:5:3，共占满 100%
+    grid-template-columns: 2fr 6fr 2fr; // 比例为 2:5:3，共占满 100%
     align-items: stretch; // 关键点：所有子项高度一致
   }
-
-  // // 移动端适配
-  // // 中等及以下屏幕：A | B 在一行，C 单独一行
-  // @media (max-width: 991px) {
-  //   grid-template-columns: repeat(2, 1fr);
-  //   grid-auto-rows: minmax(300px, auto);
-  //   // grid-template-columns: minmax(200px, 1fr) minmax(300px, 3fr); // 更精细的最小宽度控制
-  //   .sidebar {
-  //     grid-column: span 1; // 左侧占 1 列
-  //   }
-
-  //   .main {
-  //     grid-column: span 1; // 中间占 1 列
-  //   }
-
-  //   .right-panel {
-  //     grid-column: span 2; // 右侧双卡片横跨两列
-  //     width: 100%;
-  //     margin-top: 20px;
-  //   }
-  // }
   // 移动端适配
   // 中等及以下屏幕：A | B 在一行，C 单独一行
   @media (max-width: 991px) {
@@ -521,7 +500,7 @@ $card-min-width: 380px;
 
     .sidebar {
       order: 1;
-      // margin-bottom: 10px;
+      min-width: $card-min-width/2;
     }
 
     .main {
@@ -554,8 +533,5 @@ $card-min-width: 380px;
   display: flex;
   flex-direction: column;
   min-height: 350px; // 可选：防止内容太少时卡片太矮
-  border-radius: 6px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  overflow: hidden;
 }
 </style>
