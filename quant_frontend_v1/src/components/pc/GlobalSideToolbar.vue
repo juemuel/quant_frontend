@@ -94,22 +94,16 @@
         </div>
         <!-- 分组管理面板 -->
         <div v-if="activeItem === 'groups'" class="drawer-panel">
-          <el-card
-            v-for="(group, index) in groups"
-            :key="index"
-            class="group-item"
-          >
-            <div class="group-header">
-              <el-icon class="group-icon">
-                <FolderOpened />
-              </el-icon>
-              <div class="group-info">
-                <span class="group-name">{{ group.name }}</span>
-                <span class="group-members">{{ group.memberCount }}人</span>
-              </div>
-            </div>
-            <p class="group-description">{{ group.description }}</p>
-          </el-card>
+          <StockGroupPanel
+            :stock-groups-data="stockGroups"
+            @add-group="onAddGroup"
+            @edit-group="onEditGroup"
+            @delete-group="onDeleteGroup"
+            @add-stock-to-group="onAddStockToGroup"
+            @edit-stock="onEditStock"
+            @delete-stock="onDeleteStock"
+            @save-stock-note="onSaveStockNote"
+          />
         </div>
       </el-drawer>
     </div>
@@ -117,19 +111,46 @@
   <script lang="ts" setup>
   import { ref, computed, watch } from 'vue';
   import { useRoute } from 'vue-router';
+  import StockGroupPanel from './Panel/StockGroupPanel.vue';
   import {
     Document,
     Bell,
     FolderOpened,
     ArrowLeft
   } from '@element-plus/icons-vue';
+
   interface ToolbarItem {
     key: string;
     label: string;
     icon: any;
     tooltip: string;
   }
-
+  interface StockItem {
+    id: number;
+    groupId: number;
+    name: string;
+    notes: string | null;
+    customData: {
+      code: string;
+      market: string;
+    };
+    sortOrder?: number;
+    isActive?: boolean;
+    createdAt?: string;
+    updatedAt?: string;
+    tags?: any[];
+  }
+  interface StockGroup {
+    id: number;
+    typeCode: string;
+    name: string;
+    sortOrder?: number;
+    ownerId?: number;
+    isActive?: boolean;
+    createdAt?: string;
+    updatedAt?: string;
+    items: StockItem[];
+  }
   const route = useRoute()
 
   // 自动关闭抽屉逻辑
@@ -143,12 +164,93 @@
   const activeItem = ref('');
   const unreadCount = ref(5);
   const isCollapsed = ref(false);
-  // 数据
+  // 工具栏数据
   const toolbarItems: ToolbarItem[] = [
     { key: 'logs', label: '日志记录', icon: Document, tooltip: '查看系统日志' },
     { key: 'notification', label: '通知中心', icon: Bell, tooltip: '查看通知消息' },
     { key: 'groups', label: '分组管理', icon: FolderOpened, tooltip: '管理分组' }
   ];
+
+  // 分组数据
+  const stockGroups = ref<StockGroup[]>([
+    {
+      id: 1,
+      typeCode: "stock",
+      name: "我的股票",
+      sortOrder: 0,
+      ownerId: 1,
+      isActive: true,
+      createdAt: "2025-05-26T15:46:04.000+0000",
+      updatedAt: "2025-05-26T15:50:07.000+0000",
+      items: [
+        {
+          id: 1,
+          groupId: 1,
+          name: "阿里巴巴",
+          notes: null,
+          customData: {
+            code: "09988",
+            market: "hk"
+          },
+          sortOrder: 0,
+          isActive: true,
+          createdAt: "2025-05-26T15:53:51.000+0000",
+          updatedAt: "2025-05-26T15:53:51.000+0000",
+          tags: []
+        }
+      ]
+    },
+    {
+      id: 2,
+      typeCode: "stock",
+      name: "我的指数",
+      sortOrder: 0,
+      ownerId: 1,
+      isActive: true,
+      createdAt: "2025-05-26T15:51:21.000+0000",
+      updatedAt: "2025-05-26T15:51:21.000+0000",
+      items: []
+    }
+  ]);
+  // 日志数据
+  const logs = ref([
+    {
+      title: '系统更新',
+      time: '2024-01-15 14:30:25',
+      content: '系统完成安全更新，新增多项安全防护功能'
+    },
+    {
+      title: '用户登录',
+      time: '2024-01-15 13:25:18',
+      content: '用户 Michael Johnson 在新设备上完成登录'
+    },
+    {
+      title: '数据备份',
+      time: '2024-01-15 12:00:00',
+      content: '系统自动完成数据备份，存储容量剩余 1.2TB'
+    }
+  ]);
+  // 通知数据
+  const notifications = ref([
+    {
+      title: '项目进度提醒',
+      content: 'AI 助手功能开发已完成 85%，请及时检查确认',
+      time: '10 分钟前',
+      read: false
+    },
+    {
+      title: '系统维护通知',
+      content: '系统将于今晚 23:00 进行例行维护，预计持续 2 小时',
+      time: '30 分钟前',
+      read: true
+    },
+    {
+      title: '团队会议提醒',
+      content: '下午 15:00 将召开本周进度评审会议',
+      time: '2 小时前',
+      read: true
+    }
+  ]);
   // 计算属性
   const activeDrawerTitle = computed(() => {
     return toolbarItems.find(item => item.key === activeItem.value)?.label || '';
@@ -189,63 +291,94 @@
       activeItem.value = '';
     }
   });
-  // 日志数据
-  const logs = ref([
-    {
-      title: '系统更新',
-      time: '2024-01-15 14:30:25',
-      content: '系统完成安全更新，新增多项安全防护功能'
-    },
-    {
-      title: '用户登录',
-      time: '2024-01-15 13:25:18',
-      content: '用户 Michael Johnson 在新设备上完成登录'
-    },
-    {
-      title: '数据备份',
-      time: '2024-01-15 12:00:00',
-      content: '系统自动完成数据备份，存储容量剩余 1.2TB'
+
+  // 事件处理方法 (从 StockGroupPanel 接收事件)
+  const onAddGroup = (newGroup: StockGroup) => {
+    console.log('Event: Add new group in GlobalSideToolbar', newGroup);
+    // 这里可以更新 stockGroups ref，如果 StockGroupPanel 内部不直接修改 prop 的话
+    // 但由于 StockGroupPanel 内部的 localStockGroups 已经更新，并且我们期望数据源是 GlobalSideToolbar
+    // 所以这里应该更新 GlobalSideToolbar 的 stockGroups
+    // 如果 StockGroupPanel 只是派发意图，实际的数据修改在父组件完成，则：
+    // stockGroups.value.push(newGroup); // 这种方式要求 newGroup 是完整且正确的
+    // 或者，如果 StockGroupPanel 已经修改了其本地副本，并且我们信任这个修改，
+    // 我们可以重新从API获取数据或接受子组件传递的完整列表（但不推荐后者，因为prop应单向）
+    // 目前 StockGroupPanel.vue 的实现是它自己添加到了 localStockGroups，然后emit
+    // 为了保持数据同步，父组件也需要更新其数据源
+    const exists = stockGroups.value.find(g => g.id === newGroup.id);
+    if (!exists) {
+        stockGroups.value.push(newGroup);
     }
-  ]);
-  // 通知数据
-  const notifications = ref([
-    {
-      title: '项目进度提醒',
-      content: 'AI 助手功能开发已完成 85%，请及时检查确认',
-      time: '10 分钟前',
-      read: false
-    },
-    {
-      title: '系统维护通知',
-      content: '系统将于今晚 23:00 进行例行维护，预计持续 2 小时',
-      time: '30 分钟前',
-      read: true
-    },
-    {
-      title: '团队会议提醒',
-      content: '下午 15:00 将召开本周进度评审会议',
-      time: '2 小时前',
-      read: true
+  };
+
+  const onEditGroup = (groupToEdit: StockGroup) => {
+    console.log('Event: Edit group in GlobalSideToolbar', groupToEdit);
+    // 弹出编辑对话框，预填 groupToEdit 的数据
+    // 保存后更新 stockGroups.value 中对应的项
+    const index = stockGroups.value.findIndex(g => g.id === groupToEdit.id);
+    if (index !== -1) {
+      // 假设编辑完成后的新数据是 newEditedGroupData
+      // stockGroups.value.splice(index, 1, newEditedGroupData);
+      alert(`编辑分组: ${groupToEdit.name} (ID: ${groupToEdit.id}) - 具体实现在此处理`);
     }
-  ]);
-  // 分组数据
-  const groups = ref([
-    {
-      name: '研发团队',
-      memberCount: 12,
-      description: '负责核心产品功能开发和技术架构优化'
-    },
-    {
-      name: '产品设计组',
-      memberCount: 8,
-      description: '负责产品界面设计和用户体验优化'
-    },
-    {
-      name: '运维团队',
-      memberCount: 6,
-      description: '负责系统部署维护和性能监控'
+  };
+
+  const onDeleteGroup = (groupToDelete: StockGroup) => {
+    console.log('Event: Delete group in GlobalSideToolbar', groupToDelete);
+    stockGroups.value = stockGroups.value.filter(g => g.id !== groupToDelete.id);
+  };
+
+  const onAddStockToGroup = (payload: { groupIndex: number; stockItem: StockItem }) => {
+    console.log('Event: Add stock to group in GlobalSideToolbar', payload);
+    // const group = stockGroups.value[payload.groupIndex]; // 如果groupIndex仍然可靠
+    // 更好的方式是通过groupId查找
+    const group = stockGroups.value.find(g => g.id === payload.stockItem.groupId);
+    if (group) {
+        const stockExists = group.items.find(s => s.id === payload.stockItem.id);
+        if (!stockExists) {
+            group.items.push(payload.stockItem);
+        }
+    } else {
+        console.warn("Group not found for adding stock");
     }
-  ]);
+  };
+
+  const onEditStock = (payload: { groupIndex: number; stockIndex: number; stockItem: StockItem }) => {
+    console.log('Event: Edit stock in GlobalSideToolbar', payload);
+    // const group = stockGroups.value[payload.groupIndex];
+    const group = stockGroups.value.find(g => g.id === payload.stockItem.groupId);
+    if (group) {
+      const stockIndexInGroup = group.items.findIndex(s => s.id === payload.stockItem.id);
+      if (stockIndexInGroup !== -1) {
+        // 弹出编辑对话框，预填 payload.stockItem 的数据
+        // 保存后更新 group.items[stockIndexInGroup]
+        alert(`编辑股票: ${payload.stockItem.name} - 具体实现在此处理`);
+      }
+    }
+  };
+
+  const onDeleteStock = (payload: { groupIndex: number; stockItem: StockItem }) => {
+    console.log('Event: Delete stock in GlobalSideToolbar', payload);
+    // const group = stockGroups.value[payload.groupIndex];
+    const group = stockGroups.value.find(g => g.id === payload.stockItem.groupId);
+    if (group) {
+      group.items = group.items.filter(s => s.id !== payload.stockItem.id);
+    }
+  };
+
+  const onSaveStockNote = (payload: { groupIndex: number; stockIndex: number; stockItem: StockItem }) => {
+    console.log('Event: Save note for stock in GlobalSideToolbar', payload.stockItem.name, 'Note:', payload.stockItem.notes);
+    // const group = stockGroups.value[payload.groupIndex];
+    const group = stockGroups.value.find(g => g.id === payload.stockItem.groupId);
+    if (group) {
+      const stock = group.items.find(s => s.id === payload.stockItem.id);
+      if (stock) {
+        stock.notes = payload.stockItem.notes; // 更新父组件中的数据
+        // 调用API保存笔记
+        alert(`保存笔记: ${stock.name} - ${stock.notes} - 具体API调用在此处理`);
+      }
+    }
+  };
+
   </script>
   <style scoped>
   /* 侧边工具栏容器 */
@@ -348,7 +481,7 @@
     border-bottom: 1px solid #ebeef5;
   }
   :deep(.toolbar-drawer .el-drawer__body) {
-    padding: 0;
+    padding: 0; /* 移除内边距，因为 StockGroupPanel 自己有 .drawer-panel */
     overflow-y: auto;
   }
   .drawer-panel {
@@ -437,54 +570,6 @@
     color: #909399;
     display: block;
     text-align: right;
-  }
-  /* 分组项 */
-  .group-item {
-    margin-bottom: 12px;
-    transition: all 0.2s;
-    border-radius: 4px;
-    overflow: hidden;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
-  }
-  .group-item:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  }
-  .group-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
-  }
-  .group-icon {
-    color: #409eff;
-    background-color: rgba(64, 158, 255, 0.1);
-    padding: 8px;
-    border-radius: 50%;
-    font-size: 16px;
-  }
-  .group-info {
-    flex: 1;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .group-name {
-    font-weight: 500;
-    color: #303133;
-  }
-  .group-members {
-    color: #909399;
-    font-size: 12px;
-    background-color: #f5f7fa;
-    padding: 2px 6px;
-    border-radius: 10px;
-  }
-  .group-description {
-    font-size: 13px;
-    color: #606266;
-    line-height: 1.6;
-    margin: 0;
   }
   /* 响应式适配 */
   @media (max-width: 640px) {

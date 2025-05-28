@@ -47,12 +47,13 @@ const login = async () => {
     }
     loginApi.login(params).then((res) => {
       console.log('res', res)
-      if (res.data.state === 200 || res.data.state === "200") {
+      if (res.code === 200 || res.code === "200") {
         console.log('res', res)
         ElMessage.success('登录成功')
         store.commit('userInfoModule/loginChange', {
           userName: data.loginForm.username,
           Authorization: res.data.token,
+          role: res.data.role,
           signTime: new Date().getTime()
         })
         router.push('/home')

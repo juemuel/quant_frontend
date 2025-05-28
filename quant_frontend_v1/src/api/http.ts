@@ -19,9 +19,11 @@ export function get (url: string, params: any, headers: any): any {
       headers: headers,
       params: params
     }
-    request(requestConfig).then((result: unknown) => {
-      resolve(result)
-    }).catch((error: unknown) => {
+    request(requestConfig)
+    .then((result: any) => {
+      resolve(result?.data) // ✅ 只返回 data 部分
+    })
+    .catch((error: any) => {
       reject(error)
     })
   })
@@ -46,10 +48,10 @@ export function post (url: string, params: any, headers: any): any {
       data: params
     }
     request(requestConfig)
-      .then((result: unknown) => {
-        resolve(result)
+      .then((result: any) => {
+        resolve(result?.data) // ✅ 只返回 data 部分
       })
-      .catch((error: unknown) => {
+      .catch((error: any) => {
         reject(error)
       })
   })
