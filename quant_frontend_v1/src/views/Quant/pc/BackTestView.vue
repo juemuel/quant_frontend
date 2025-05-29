@@ -180,7 +180,7 @@ import axios from 'axios';
 import DateUtils from '@/utils/DateUtils'
 import { nextTick, ref, onMounted, reactive, onUnmounted } from 'vue'
 import * as echarts from 'echarts';
-import quantApi from '@/api/Quant/quantApi'
+import quantApi from '@/api/quantApi'
 const profitLineChartRef = ref(null);
 const annualIncomeChartRef = ref(null);
 const data = reactive({

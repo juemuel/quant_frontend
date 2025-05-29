@@ -1,4 +1,4 @@
-import http from '../http'
+import http from './http'
 import qs from 'qs'
 
 export default {

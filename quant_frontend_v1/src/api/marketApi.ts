@@ -1,4 +1,4 @@
-import http from '../http'
+import http from "./http"
 
 // 获取股票列表
 export async function getStockList(params: any): Promise<any>{

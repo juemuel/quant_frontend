@@ -1,341 +1,384 @@
 <template>
-    <div class="drawer-panel stock-group-panel">
-    <el-button type="primary" @click="handleAddGroup" class="add-group-btn">添加分组</el-button>
-    <el-card
-      v-for="(group, groupIndex) in localStockGroups"
-      :key="group.id"
-      class="group-item"
-      shadow="never"
-    >
-      <template #header>
-        <div class="group-header">
-          <el-icon class="group-icon"><FolderOpened /></el-icon>
-          <span class="group-name">{{ group.name }}</span>
-          <div class="group-actions">
-            <el-tooltip content="编辑分组" placement="top"><el-button icon="EditPen" type="text" size="small" @click="handleEditGroup(groupIndex)"></el-button></el-tooltip>
-            <el-tooltip content="删除分组" placement="top"><el-button icon="Delete" type="text" size="small" @click="handleDeleteGroup(groupIndex)"></el-button></el-tooltip>
-            <el-tooltip content="添加股票" placement="top"><el-button icon="Plus" type="text" size="small" @click="handleAddStockToGroup(groupIndex)"></el-button></el-tooltip>
-          </div>
-        </div>
-      </template>
-      <div v-if="group.items && group.items.length > 0" class="stock-list">
-        <div
-          v-for="(stock, stockIndex) in group.items"
-          :key="stock.id"
-          class="stock-item"
-          :class="{ 'is-editing-notes': editingNotesInfo.groupIndex === groupIndex && editingNotesInfo.stockIndex === stockIndex }"
-          @click="toggleNotesEditor(groupIndex, stockIndex)"
-        >
-          <div class="stock-info">
-            <span class="stock-name">{{ stock.name }}</span>
-            <span class="stock-code">{{ stock.customData.code }}.{{ stock.customData.market }}</span>
-            <div class="stock-item-actions">
-                <el-tooltip content="编辑股票" placement="top"><el-button icon="Edit" type="text" size="small" @click.stop="handleEditStock(groupIndex, stockIndex)"></el-button></el-tooltip>
-                <el-tooltip content="删除股票" placement="top"><el-button icon="Delete" type="text" size="small" @click.stop="handleDeleteStock(groupIndex, stockIndex)"></el-button></el-tooltip>
+  <div class="drawer-panel stock-group-panel">
+    <div class="panel-header">
+      <el-input v-model="searchKeywordInput" placeholder="搜索分组名称或股票名称/代码" clearable prefix-icon="Search"
+        class="search-input" @input="handleSearchInput" />
+    </div>
+    <div class="panel-content">
+      <el-card v-for="group in localStockGroups" :key="group.id" class="group" shadow="never">
+        <template #header>
+          <div class="group-header">
+            <el-icon class="action-icon">
+              <FolderOpened />
+            </el-icon>
+            <span class="group-name">{{ group.name }}</span>
+            <div class="group-actions">
+              <el-tooltip content="编辑分组" placement="top">
+                <el-button :icon="EditPen" type="text" size="small" @click="handleEditGroup(group)">
+                </el-button>
+              </el-tooltip>
+              <el-tooltip content="删除分组" placement="top">
+                <el-button :icon="Delete" type="text" size="small" @click="handleDeleteGroup(group)">
+                </el-button>
+              </el-tooltip>
+              <el-tooltip content="添加股票" placement="top">
+                <el-button :icon="Plus" type="text" size="small" @click="handleAddStockToGroup(group)">
+                </el-button>
+              </el-tooltip>
             </div>
           </div>
-          <div v-if="editingNotesInfo.groupIndex === groupIndex && editingNotesInfo.stockIndex === stockIndex" class="stock-notes-editor" @click.stop>
-            <el-input
-              type="textarea"
-              :rows="3"
-              placeholder="添加或编辑笔记..."
-              v-model="stock.notes"
-              @blur="saveStockNoteOnBlur(groupIndex, stockIndex)"
-              ref="notesInputRef"
-            />
-            <!-- <el-button size="small" type="primary" @click.stop="handleSaveNote(groupIndex, stockIndex)" class="save-note-btn">保存笔记</el-button> -->
-          </div>
-          <div v-else-if="stock.notes" class="stock-notes-preview" @click.stop="toggleNotesEditor(groupIndex, stockIndex, true)">
-            <el-icon ><ChatLineSquare /></el-icon> {{truncateNotes(stock.notes)}}
+        </template>
+        <div v-if="group.items && group.items.length > 0" class="group-list">
+          <div v-for="stock in group.items" :key="stock.id" class="group-item"
+            :class="{ 'is-editing-notes': editingNotesInfo.groupId === group.id && editingNotesInfo.stockId === stock.id }">
+            <div class="item-info">
+              <span class="item-name">{{ stock.name }}</span>
+              <span class="item-code">{{ stock.customData.code }}.{{ stock.customData.market }}</span>
+              <div class="item-actions">
+                <el-tooltip content="编辑股票" placement="top">
+                  <el-button
+                    :icon="stock.isEditing ? Check : Edit"
+                    type="text"
+                    size="small"
+                    @click.stop="handleGroupItemEdit(group, stock)"
+                  >
+                  </el-button>
+                </el-tooltip>
+                <el-tooltip content="删除股票" placement="top">
+                  <el-button :icon="Delete" type="text" size="small" @click.stop="handleDeleteStock(group, stock)">
+                  </el-button>
+                </el-tooltip>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-      <el-empty v-else description="暂无股票" :image-size="60"></el-empty>
-    </el-card>
+        <el-empty v-else description="暂无股票" :image-size="60"></el-empty>
+      </el-card>
+    </div>
+    <div class="panel-footer">
+      <el-button type="primary" @click="handleAddGroup" class="add-group-btn" :icon="Plus">添加分组</el-button>
+    </div>
   </div>
-  </template>
-  <script lang="ts" setup>
-  import { ref, watch, toRefs, defineProps, defineEmits, nextTick } from 'vue';
-  import { FolderOpened, EditPen, Delete, Plus, Edit, ChatLineSquare } from '@element-plus/icons-vue'; // 引入所需图标
-  // Interfaces (与 GlobalSideToolbar.vue 中的定义一致)
-  interface StockItem {
-    id: number;
-    groupId: number;
-    name: string;
-    notes: string | null;
-    customData: {
-      code: string;
-      market: string;
-    };
-    sortOrder?: number;
-    isActive?: boolean;
-    createdAt?: string;
-    updatedAt?: string;
-    tags?: any[];
-  }
-  interface StockGroup {
-    id: number;
-    typeCode: string;
-    name: string;
-    sortOrder?: number;
-    ownerId?: number;
-    isActive?: boolean;
-    createdAt?: string;
-    updatedAt?: string;
-    items: StockItem[];
-  }
-  // Props
-  const props = defineProps<{
-    stockGroupsData: StockGroup[];
-  }>();
-  // Emits
-  const emit = defineEmits([
-    'addGroup',
-    'editGroup',
-    'deleteGroup',
-    'addStockToGroup',
-    'editStock',
-    'deleteStock',
-    'saveStockNote'
-  ]);
-  // 使用 ref 来创建 props 的本地副本，以便在组件内部修改（如果需要）
-  // 或者直接使用 props.stockGroupsData，但要注意 props 是单向数据流
-  // 为了简单起见，并且考虑到增删改查会直接修改数据源，这里创建一个本地可响应的副本
-  const { stockGroupsData } = toRefs(props);
-  const localStockGroups = ref<StockGroup[]>([]);
-  watch(stockGroupsData, (newData) => {
-    // 深拷贝以避免直接修改 prop
-    localStockGroups.value = JSON.parse(JSON.stringify(newData));
-  }, { immediate: true, deep: true });
-// 笔记编辑状态管理
-const editingNotesInfo = ref<{ groupIndex: number | null; stockIndex: number | null }>({ groupIndex: null, stockIndex: null });
-const notesInputRef = ref<any>(null); // 用于聚焦笔记输入框
-const toggleNotesEditor = async (groupIndex: number, stockIndex: number, forceOpen = false) => {
-  if (editingNotesInfo.value.groupIndex === groupIndex && editingNotesInfo.value.stockIndex === stockIndex && !forceOpen) {
-    // 如果当前编辑器已打开且不是强制打开，则关闭它 (保存逻辑在blur事件中)
-    editingNotesInfo.value = { groupIndex: null, stockIndex: null };
+</template>
+
+<script lang="ts" setup>
+// ... existing code ...
+import { ref, watch, toRefs, defineProps, defineEmits, nextTick } from 'vue';
+import { FolderOpened, EditPen, Delete, Plus, Edit, ChatLineSquare, Check } from '@element-plus/icons-vue';
+import { ElMessage } from 'element-plus';
+import homeApi from '@/api/homeApi';
+
+interface StockItem {
+  id: number;
+  groupId: number;
+  name: string;
+  notes: string | null;
+  customData: {
+    code: string;
+    market: string;
+  };
+  sortOrder?: number;
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  tags?: any[];
+  // 额外增加字段
+  isEditing?: boolean;
+}
+
+interface StockGroup {
+  id: number;
+  typeCode: string;
+  name: string;
+  sortOrder?: number;
+  ownerId?: number;
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  items: StockItem[];
+}
+
+// Props
+const props = defineProps<{
+  stockGroupsData: StockGroup[];
+}>();
+
+// Emits
+const emit = defineEmits([
+  'search',
+  'addGroup',
+  'deleteGroup',
+  'editGroup',
+
+  'addStockToGroup',
+  'deleteStock',
+  'editStock',
+  'saveStockNote'
+]);
+
+const notesInputRefs = ref<Record<string, any>>({});
+const editingNotesInfo = ref<{
+  groupId: number | null;
+  stockId: number | null;
+}>({ groupId: null, stockId: null });
+
+const { stockGroupsData } = toRefs(props);
+const localStockGroups = ref<StockGroup[]>([]);
+const searchKeywordInput = ref('');
+
+watch(stockGroupsData, (newData) => {
+  localStockGroups.value = JSON.parse(JSON.stringify(newData)).map((group: StockGroup) => ({
+    ...group,
+    items: group.items.map((item: StockItem) => ({
+      ...item,
+      isEditing: item.isEditing ?? false // 保留原有状态或初始化为 false
+    }))
+  }));
+}, { immediate: true, deep: true });
+const handleGroupItemEdit = (group: StockGroup, item: StockItem) => {
+  const isCurrentlyEditing = !!item.isEditing;
+  // const isActiveNoteEditor = editingNotesInfo.value.groupId === group.id && editingNotesInfo.value.stockId === stock.id;
+  if (isCurrentlyEditing) {
+    // 当前是编辑状态，执行保存
+    handleSaveStock(group, item);
   } else {
-    // 打开新的或切换到另一个编辑器
-    editingNotesInfo.value = { groupIndex, stockIndex };
-    await nextTick(); // 等待DOM更新
-    if (notesInputRef.value && notesInputRef.value[0]) { // ElInput 包裹了原生input, ref可能是数组
-        notesInputRef.value[0].focus();
+    toggleItemEditorDialog(group, item);
+    nextTick(() => {
+      item.isEditing = true;
+    });
+  }
+};
+const handleSearchInput = (value: string | number) => {
+  emit('search', String(value));
+};
+const handleAddGroup = () => {
+  emit('addGroup');
+};
+const handleDeleteGroup = (group: StockGroup) => {
+  emit('deleteGroup', { groupId: group.id });
+};
+const handleEditGroup = (group: StockGroup) => {
+  emit('editGroup', { groupId: group.id, currentName: group.name });
+};
+
+const handleAddStockToGroup = (group: StockGroup) => {
+  emit('addStockToGroup', { groupId: group.id });
+};
+
+const handleSaveStock = (group: StockGroup, item: StockItem) => {
+  emit('editStock', { groupId: group.id, stockId: item.id, currentStock: item });
+};
+
+const handleDeleteStock = (group: StockGroup, item: StockItem) => {
+  emit('deleteStock', { groupId: group.id, stockId: item.id });
+};
+const toggleItemEditorDialog = async (group: StockGroup, item: StockItem, forceShow = false) => {
+ console.log('open ItemEditDialog')
+};
+</script>
+
+<style lang="scss" scoped>
+.drawer-panel.stock-group-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #f8fafc;
+}
+
+::v-deep(.el-drawer__body){
+  padding-top: 0px !important;
+}
+.panel-header {
+  padding: 10px;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+
+  .search-input {
+    width: 100%;
+
+    :deep(.el-input__wrapper) {
+      border-radius: 18px;
+      box-shadow: 0 0 0 1px #e4e7ed;
+
+      &:hover {
+        box-shadow: 0 0 0 1px #c0c4cc;
+      }
     }
   }
-};
+}
 
-const saveStockNoteOnBlur = (groupIndex: number, stockIndex: number) => {
-    // 延迟关闭，以便其他点击事件（如保存按钮，如果添加的话）可以触发
-    // setTimeout(() => {
-        if (editingNotesInfo.value.groupIndex === groupIndex && editingNotesInfo.value.stockIndex === stockIndex) {
-            handleSaveNote(groupIndex, stockIndex);
-            // editingNotesInfo.value = { groupIndex: null, stockIndex: null }; // 不在此处关闭，让toggleNotesEditor控制或保留打开状态直到用户点击别处
-        }
-    // }, 100); // 延迟时间可以调整
-};
+.panel-content {
+  flex: 1;
+  overflow-y: auto;
+  background: linear-gradient(to bottom, #f8fafc 0%, #ffffff 100%);
+}
 
-const truncateNotes = (notes: string | null, maxLength = 30) => {
-  if (!notes) return '';
-  return notes.length > maxLength ? notes.substring(0, maxLength) + '...' : notes;
-};
+.group {
+  margin-bottom: 16px;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border: 1px solid #e4e7ed;
+  background: #fff;
 
-// Methods (handleAddGroup, handleEditGroup, etc. 保持不变，但emit参数可能需要调整以传递ID而非索引)
-const handleAddGroup = () => {
-  const newGroup: StockGroup = {
-    id: Date.now(),
-    typeCode: 'stock',
-    name: '新分组',
-    items: []
-  };
-  localStockGroups.value.push(newGroup);
-  emit('addGroup', newGroup);
-};
-
-const handleEditGroup = (groupIndex: number) => {
-  emit('editGroup', localStockGroups.value[groupIndex]);
-};
-
-const handleDeleteGroup = (groupIndex: number) => {
-  const groupToDelete = localStockGroups.value[groupIndex];
-  localStockGroups.value.splice(groupIndex, 1);
-  emit('deleteGroup', groupToDelete);
-};
-
-const handleAddStockToGroup = (groupIndex: number) => {
-  const newStock: StockItem = {
-    id: Date.now(),
-    groupId: localStockGroups.value[groupIndex].id,
-    name: '新股票',
-    notes: '',
-    customData: { code: '00000', market: 'sz' }
-  };
-  localStockGroups.value[groupIndex].items.push(newStock);
-  emit('addStockToGroup', { groupId: localStockGroups.value[groupIndex].id, stockItem: newStock }); // 传递groupId
-};
-
-const handleEditStock = (groupIndex: number, stockIndex: number) => {
-  emit('editStock', { stockItem: localStockGroups.value[groupIndex].items[stockIndex] }); // 只传递stockItem，父组件通过ID查找
-};
-
-const handleDeleteStock = (groupIndex: number, stockIndex: number) => {
-  const stockToDelete = localStockGroups.value[groupIndex].items[stockIndex];
-  localStockGroups.value[groupIndex].items.splice(stockIndex, 1);
-  emit('deleteStock', { stockItem: stockToDelete }); // 只传递stockItem
-};
-
-const handleSaveNote = (groupIndex: number, stockIndex: number) => {
-  const stock = localStockGroups.value[groupIndex].items[stockIndex];
-  emit('saveStockNote', { stockItem: stock }); // 只传递stockItem
-  // editingNotesInfo.value = { groupIndex: null, stockIndex: null }; // 保存后关闭编辑器
-};
-  </script>
-  <style scoped>
-  :deep(.el-icon) {
-      font-size: 16px;
+  &:hover {
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    border-color: #d4d9e2;
   }
-  /* 抽屉面板 */
-  .stock-group-panel {
-  padding: 12px;
-  gap: 10px;
-}
 
-.add-group-btn {
-  margin-bottom: 10px;
-  width: 100%;
-}
+  :deep(.el-card__header) {
+    padding: 12px 16px;
+    background: #f9fafc;
+    border-bottom: 1px solid #e4e7ed;
+  }
 
-.group-item {
-  margin-bottom: 10px;
-  border-radius: 4px;
-  /* border: 1px solid #e0e0e0; */ /* 更轻的边框 */
-}
-
-:deep(.el-card__header) {
-  padding: 8px 12px; /* 减小卡片头部内边距 */
-  background-color: #f9f9f9;
-  border-bottom: 1px solid #eee;
-}
-
-:deep(.el-card__body) {
-  padding: 8px; /* 减小卡片主体内边距 */
+  :deep(.el-card__body) {
+    padding: 0;
+  }
 }
 
 .group-header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  padding-right: 8px;
+
+  .action-icon {
+    color: #409eff;
+    font-size: 18px;
+    margin-right: 8px;
+  }
+
+  .group-name {
+    flex: 1;
+    font-weight: 600;
+    color: #303133;
+    font-size: 15px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .group-actions {
+    display: flex;
+    gap: 4px;
+
+    .el-button {
+      padding: 6px;
+      color: #909399;
+
+      &:hover {
+        color: #409eff;
+        background: rgba(64, 158, 255, 0.1);
+      }
+    }
+  }
 }
 
-.group-icon {
-  font-size: 16px;
-  color: #409eff;
+.group-list {
+  .group-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f0f2f5;
+    transition: background 0.2s;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &:hover {
+      background: #f5f9ff;
+    }
+
+    &.is-editing-notes {
+      background: #f0f7ff;
+    }
+  }
 }
 
-.group-name {
-  font-weight: 500;
-  color: #303133;
-  flex-grow: 1;
-  font-size: 14px;
-}
-
-.group-actions .el-button {
-  padding: 4px;
-  font-size: 14px;
-}
-
-.stock-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px; /* 减小股票项之间的间距 */
-}
-
-.stock-item {
-  padding: 6px 8px;
-  border: 1px solid #f0f0f0;
-  border-radius: 3px;
-  background-color: #fff;
-  cursor: pointer;
-  transition: background-color 0.2s, box-shadow 0.2s;
-}
-
-.stock-item:hover {
-  background-color: #f7faff;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-}
-
-.stock-item.is-editing-notes {
-  background-color: #eef5ff; /* 编辑时高亮 */
-  /* border-left: 3px solid #409eff; */
-}
-
-.stock-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  margin-bottom: 4px; /* 为可能的笔记预览留出空间 */
-}
-
-.stock-name {
-  font-weight: 500;
-  flex-grow: 1;
-  color: #333;
-}
-
-.stock-code {
-  font-size: 12px;
-  color: #888;
-  background-color: #f5f5f5;
-  padding: 1px 4px;
-  border-radius: 3px;
-}
-
-.stock-item-actions {
-  display: flex;
-}
-
-.stock-item-actions .el-button {
-  padding: 2px;
-  font-size: 13px;
-  margin-left: 4px;
-}
-
-.stock-notes-editor {
-  margin-top: 6px;
-}
-
-.stock-notes-editor .el-textarea__inner {
-  font-size: 12px;
-  padding: 4px 6px;
-}
-
-.save-note-btn {
-  margin-top: 4px;
-  float: right;
-}
-
-.stock-notes-preview {
-  font-size: 12px;
-  color: #666;
-  padding: 2px 0;
-  cursor: pointer;
+.item-info {
   display: flex;
   align-items: center;
-  gap: 4px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.stock-notes-preview .el-icon {
-  font-size: 12px;
+  gap: 8px;
+
+  .item-name {
+    flex: 1;
+    font-size: 14px;
+    color: #303133;
+    font-weight: 500;
+  }
+
+  .item-code {
+    font-size: 12px;
+    color: #909399;
+    background: #f5f7fa;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  .item-actions {
+
+    .el-button {
+      padding: 4px;
+      color: #909399;
+      &:hover {
+        color: #409eff;
+      }
+    }
+  }
 }
 
-.stock-notes-preview:hover {
-  color: #409eff;
+.el-empty {
+  padding: 24px 0;
+
+  :deep(.el-empty__description) {
+    color: #909399;
+  }
 }
 
-:deep(.el-empty__description) {
-    font-size: 13px;
-    margin-top: 8px;
+.panel-footer {
+  padding: 12px 16px;
+  background: #fff;
+  border-top: 1px solid #e4e7ed;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+
+  .add-group-btn {
+    width: 100%;
+    border-radius: 6px;
+    height: 40px;
+    font-weight: 500;
+  }
 }
-  </style>
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+
+  .panel-header,
+  .panel-content,
+  .panel-footer {
+    padding: 12px;
+  }
+
+  .group-header .group-actions .el-button {
+    padding: 4px;
+  }
+
+  .item-info {
+    flex-wrap: wrap;
+
+    .item-code {
+      order: 1;
+      width: 100%;
+      margin-top: 4px;
+      margin-left: 0;
+    }
+
+    .item-actions {
+      opacity: 1;
+    }
+  }
+}
+</style>

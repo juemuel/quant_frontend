@@ -18,7 +18,7 @@
 </template>
 
 <script setup lang="ts">
-import loginApi from '@/api/Login/loginApi'
+import loginApi from '@/api/loginApi'
 import { onMounted, reactive } from 'vue';
 import { ElMessage } from 'element-plus'
 import { routerKey, useRouter } from 'vue-router';
