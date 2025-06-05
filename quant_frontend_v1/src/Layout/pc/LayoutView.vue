@@ -5,9 +5,6 @@
         <div class="title" :class="{ 'is-collapsed': isCollapse }">{{ isCollapse ? 'Jue' : 'Juemuel\'s Workspace' }}</div>
         <SideBarComponent :is-collapse="isCollapse" />
       </el-aside>
-      <div class="hamburger-container" :class="{ 'is-collapsed': isCollapse }" @click="toggleSideBar">
-        <Icon :icon="isCollapse ? 'ep:arrow-right-bold' : 'ep:arrow-left-bold'" :width="24" :height="24" style="color: #fff;" />
-      </div>
       <el-container class="main-container" :class="{ 'is-collapsed': isCollapse }">
         <el-header class="header">
           <HeaderComponent />
