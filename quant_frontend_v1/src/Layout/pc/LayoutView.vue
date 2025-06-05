@@ -3,7 +3,7 @@
     <el-container style="height: 100%;">
       <el-aside class="side-bar" :class="{ 'is-collapsed': isCollapse }">
         <div class="title" :class="{ 'is-collapsed': isCollapse }">{{ isCollapse ? 'Jue' : 'Juemuel\'s Workspace' }}</div>
-        <SideBarComponent :is-collapse="isCollapse" />
+        <SideBarComponent v-model:is-collapse="isCollapse" />
       </el-aside>
       <el-container class="main-container" :class="{ 'is-collapsed': isCollapse }">
         <el-header class="header">
@@ -21,10 +21,6 @@ import SideBarComponent from "./SideBarComponent.vue";
 import Icon from '@/components/IconifyIcon.vue';
 
 const isCollapse = ref(false);
-
-const toggleSideBar = () => {
-  isCollapse.value = !isCollapse.value;
-};
 </script>
 
 <style scoped>

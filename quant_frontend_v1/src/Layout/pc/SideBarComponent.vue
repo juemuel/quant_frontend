@@ -41,23 +41,34 @@
     <!-- 折叠按钮始终固定在底部 -->
     <div class="sidebar-footer">
       <div class="tools">
-        <!-- 设置按钮 -->
-        <el-tooltip content="设置" placement="right">
-          <div class="tool-btn">
-            <el-icon>
-              <Setting />
-            </el-icon>
-          </div>
-        </el-tooltip>
-        <!-- 折叠按钮 -->
-        <el-tooltip :content="isCollapse ? '展开' : '折叠'" placement="right">
+        <!-- 非折叠状态下显示的按钮 -->
+        <div v-if="!isCollapse" class="tool-group">
+          <!-- 主题切换 -->
+          <el-tooltip content="切换主题" placement="top">
+            <div class="tool-btn" @click="toggleTheme">
+              <el-icon>
+                <Moon v-if="!isDarkMode" />
+                <Sunny v-else />
+              </el-icon>
+            </div>
+          </el-tooltip>
+          <!-- 更多功能 -->
+          <el-tooltip content="更多功能" placement="top">
+            <div class="tool-btn" @click="showMoreOptions">
+              <el-icon>
+                <More />
+              </el-icon>
+            </div>
+          </el-tooltip>
+        </div>
+        <!-- 折叠按钮始终显示 -->
+        <el-tooltip :content="isCollapse ? '展开' : '折叠'" placement="top">
           <div class="tool-btn" @click="toggleCollapse">
             <el-icon>
               <component :is="isCollapse ? ArrowRightBold : ArrowLeftBold" />
             </el-icon>
           </div>
         </el-tooltip>
-        <!-- 其他按钮可在此扩展 -->
       </div>
     </div>
   </div>
@@ -69,11 +80,17 @@ import Icon from '@/components/IconifyIcon.vue'
 import {
   ArrowLeftBold,
   ArrowRightBold,
-  Setting
+  Setting,
+  Moon,
+  Sunny,
+  Bell,
+  User,
+  More
 } from '@element-plus/icons-vue'
 const props = defineProps<{
   isCollapse: boolean
 }>()
+
 const emit = defineEmits<{(e: 'update:is-collapse', value: boolean): void
 }>()
 const toggleCollapse = () => {
@@ -197,5 +214,10 @@ const data = {
   &:hover {
     background-color: rgba(255, 255, 255, 0.1);
   }
+}
+.tool-group {
+  transition: opacity 0.3s ease;
+  display: flex;
+  gap: 12px;
 }
 </style>
