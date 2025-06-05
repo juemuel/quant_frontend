@@ -21,7 +21,7 @@
         </div>
         <!-- 折叠按钮放到工具栏内部 -->
         <div class="collapse-btn-wrapper" @click="toggleCollapse">
-          <el-button class="collapse-btn" :icon="ArrowLeft" :class="{ rotated: isCollapsed }" />
+          <el-button class="collapse-btn" :icon="ArrowRight" :class="{ rotated: isCollapsed }" />
         </div>
       </div>
     </div>
@@ -74,7 +74,8 @@ import {
   Document,
   Bell,
   FolderOpened,
-  ArrowLeft
+  ArrowLeft,
+  ArrowRight
 } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
 import http from '@/api/http';
@@ -406,14 +407,19 @@ const onSearchGroupList = async (keyValue: string) => {
   background: #f5f7fa;
 }
 
-.collapse-btn.rotated i {
+/* .collapse-btn.rotated i {
   transform: rotate(180deg);
 }
-
 .collapse-btn i {
   transition: transform 0.3s;
+} */
+:deep(.collapse-btn i) {
+  transition: transform 0.2s;
 }
 
+:deep(.collapse-btn.rotated i) {
+  transform: rotate(180deg);
+}
 /* 工具栏项目 */
 .toolbar-items {
   display: flex;
