@@ -88,7 +88,8 @@ import {
   More
 } from '@element-plus/icons-vue'
 const props = defineProps<{
-  isCollapse: boolean
+  isCollapse: boolean,
+  isDarkMode: boolean
 }>()
 
 const emit = defineEmits<{(e: 'update:is-collapse', value: boolean): void
@@ -96,7 +97,12 @@ const emit = defineEmits<{(e: 'update:is-collapse', value: boolean): void
 const toggleCollapse = () => {
   emit('update:is-collapse', !props.isCollapse)
 }
-
+const toggleTheme = () => {
+  console.log('toggleTheme')
+}
+const showMoreOptions = () => {
+  console.log('showMoreOptions')
+}
 // menu 数据不变
 const data = {
   activeIndex: '/home',
@@ -178,6 +184,7 @@ const data = {
 .el-menu-vertical-demo {
   flex: 1;
   overflow-y: auto;
+  border: none;
 }
 
 .sidebar-footer {

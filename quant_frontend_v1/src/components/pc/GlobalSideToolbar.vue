@@ -9,11 +9,14 @@
             :class="{ active: activeItem === item.key }" @click="handleItemClick(item)">
             <el-tooltip :content="item.tooltip" placement="left" :show-after="300">
               <div class="item-content">
-                <el-badge :value="item.key === 'notification' ? unreadCount : null" :max="99" type="danger">
+                <el-badge v-if="item.key === 'logs' || item.key === 'notification'" :value="unreadCount" :max="99" type="danger">
                   <el-icon class="item-icon">
                     <component :is="item.icon" />
                   </el-icon>
                 </el-badge>
+                <el-icon v-else class="item-icon">
+                  <component :is="item.icon" />
+                </el-icon>
                 <span class="item-label">{{ item.label }}</span>
               </div>
             </el-tooltip>
@@ -66,7 +69,7 @@
   </div>
 </template>
 <script lang="ts" setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onUnmounted, onMounted } from 'vue';
 import homeApi from '@/api/homeApi';
 import { useRoute } from 'vue-router';
 import StockGroupPanel from './Panel/StockGroupPanel.vue';
@@ -132,47 +135,12 @@ const toolbarItems: ToolbarItem[] = [
   { key: 'groups', label: '分组管理', icon: FolderOpened, tooltip: '管理分组' }
 ];
 
+onMounted(() => {
+  onSearchGroupList('')
+});
+
 // 分组数据
-const stockGroups = ref<StockGroup[]>([
-  {
-    id: 1,
-    typeCode: "stock",
-    name: "我的股票",
-    sortOrder: 0,
-    ownerId: 1,
-    isActive: true,
-    createdAt: "2025-05-26T15:46:04.000+0000",
-    updatedAt: "2025-05-26T15:50:07.000+0000",
-    items: [
-      {
-        id: 1,
-        groupId: 1,
-        name: "阿里巴巴",
-        notes: null,
-        customData: {
-          code: "09988",
-          market: "hk"
-        },
-        sortOrder: 0,
-        isActive: true,
-        createdAt: "2025-05-26T15:53:51.000+0000",
-        updatedAt: "2025-05-26T15:53:51.000+0000",
-        tags: []
-      }
-    ]
-  },
-  {
-    id: 2,
-    typeCode: "stock",
-    name: "我的指数",
-    sortOrder: 0,
-    ownerId: 1,
-    isActive: true,
-    createdAt: "2025-05-26T15:51:21.000+0000",
-    updatedAt: "2025-05-26T15:51:21.000+0000",
-    items: []
-  }
-]);
+const stockGroups = ref<StockGroup[]>([]);
 // 日志数据
 const logs = ref([
   {
@@ -233,12 +201,15 @@ const handleItemClick = (item: ToolbarItem) => {
   activeItem.value = item.key;
   drawerVisible.value = true;
   // 如果是通知中心，点击后重置未读数
-  if (item.key === 'notification') {
+  if (item.key === 'notification' || item.key === 'logs') {
     unreadCount.value = 0;
     // 将所有通知标记为已读
     notifications.value.forEach(notification => {
       notification.read = true;
     });
+  } else if (item.key === 'groups') {
+    // 获取分组列表
+    onSearchGroupList('')
   }
 };
 const handleDrawerClose = (done: () => void) => {
@@ -277,16 +248,24 @@ const onAddGroup = async (newGroup: StockGroup) => {
 const onEditGroup = async (groupToEdit: StockGroup) => {
   console.log('edit')
 };
-const onDeleteGroup = async (groupToDelete: StockGroup) => {
+/**
+ * 删除分组
+ * @param obj
+ */
+const onDeleteGroup = async (obj: any) => {
+  console.log('Event: Handle Delect Group', obj);
   try {
     const response = await homeApi.deleteGroup({
-      groupId: groupToDelete.id,
-      ownerId: groupToDelete.ownerId
+      groupId: obj.groupId,
+      ownerId: localStorage.getItem('id') || '',
     });
     console.log('Group deleted:', response);
-
-    stockGroups.value = stockGroups.value.filter(g => g.id !== groupToDelete.id);
-    ElMessage.success('分组删除成功');
+    if (response.code === 200) {
+      ElMessage.success('分组删除成功');
+      stockGroups.value = stockGroups.value.filter(g => g.id !== obj.id);
+    } else {
+      ElMessage.error('分组删除失败');
+    }
   } catch (error) {
     console.error('Error deleting group:', error);
     ElMessage.error('删除分组失败');
@@ -313,37 +292,74 @@ const onAddStockToGroup = async (stockItem: StockItem) => {
 };
 const onEditStock = async (stockItem: StockItem) => {
   console.log('Event: Edit stock in GlobalSideToolbar', stockItem.name);
+  try {
+    const response = await homeApi.updateGroupItem({
+      groupId: stockItem.groupId,
+      itemId: stockItem.id,
+      itemName: stockItem.name,
+      notes: stockItem.notes,
+      customData: stockItem.customData,
+      ownerId: localStorage.getItem('id') || '',
+    });
+    console.log('Stock edited:', response);
+    if (response.code === 200) {
+      ElMessage.success('股票编辑成功');
+    } else {
+      ElMessage.error('股票编辑失败');
+    }
+  } catch (error) {
+    console.error('Error editing stock:', error);
+    ElMessage.error('编辑股票失败');
+  }
 };
-const onDeleteStock = async (stockItem: StockItem) => {
+/**
+ * 删除股票
+ * @param obj 股票
+ */
+const onDeleteStock = async (obj: any) => {
+  console.log('Event: Handle Delect Stock', obj);
   try {
     const response = await homeApi.deleteGroupItem({
-      itemId: stockItem.id,
-      ownerId: localStorage.getItem('ownerId') || ''
+      itemId: obj.stockId,
+      ownerId: localStorage.getItem('id') || ''
     });
     console.log('Stock deleted:', response);
-
-    const group = stockGroups.value.find(g => g.id === stockItem.groupId);
-    if (group) {
-      group.items = group.items.filter(s => s.id !== stockItem.id);
+    if (response.code === 200) {
       ElMessage.success('股票删除成功');
+      const group = stockGroups.value.find(g => g.id === obj.groupId);
+      if (group) {
+        group.items = group.items.filter(s => s.id !== obj.stockId);
+      }
+    } else {
+      ElMessage.error('股票删除失败');
     }
   } catch (error) {
     console.error('Error deleting stock:', error);
     ElMessage.error('删除股票失败');
   }
 };
-const onSearchGroupList = async (keyValue: string) => {
+/**
+ * 获取分组列表
+ * @param keyword 关键字
+ */
+const onSearchGroupList = async (obj: any) => {
+  console.log('Event: Handle Search StockList', obj);
   try {
     const response = await homeApi.getGroupList({
-      userId: parseInt(localStorage.getItem('userId') || '1'),
-      typeCode: 'stock'
+      userId: localStorage.getItem('id'),
+      typeCode: 'stock',
+      keyword: obj.keyword
     });
-    console.log('Group list:', response);
+    console.log('[API]Result getGroupList', response)
 
-    if (response && response.length > 0) {
-      stockGroups.value = response;
+    if (response.code === 200) {
+      if (response && response.data.length > 0) {
+        stockGroups.value = response.data;
+      } else {
+        ElMessage.error('分组列表为空');
+      }
     } else {
-      ElMessage.error('分组列表为空');
+      ElMessage.error('分组列表获取失败');
     }
   } catch (error) {
     console.error('Error fetching group list:', error);
