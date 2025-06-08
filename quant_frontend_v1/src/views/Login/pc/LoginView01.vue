@@ -37,7 +37,8 @@ const data = reactive({
     password: [
       { required: true, message: '请输入密码', trigger: 'blur' }
     ]
-  }
+  },
+  loading: false
 })
 const login = async () => {
   try {
@@ -54,7 +55,8 @@ const login = async () => {
           userName: data.loginForm.username,
           Authorization: res.data.token,
           role: res.data.role,
-          signTime: new Date().getTime()
+          signTime: new Date().getTime(),
+          id: res.data.id
         })
         router.push('/home')
       } else {
