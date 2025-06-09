@@ -130,8 +130,7 @@ const emit = defineEmits([
   'addGroup',
   'deleteGroup',
   'editGroup',
-
-  'addStockToGroup',
+  'addGroupItem',
   'deleteStock',
   'editStock',
   'saveStockNote'
@@ -163,7 +162,11 @@ const toggleNotes = (stock: StockItem) => {
 };
 // 添加分组（打开弹窗）
 const handleAddGroup = () => {
-  emit('addGroup');
+  openPanelDialog(
+    'addGroup',
+    { groupName: '新分组' },
+    [{ key: 'groupName', label: '分组名称', type: 'input' }]
+  );
 };
 // 删除分组
 const handleDeleteGroup = (group: StockGroup) => {
@@ -174,12 +177,12 @@ const handleEditGroup = (group: StockGroup) => {
   openPanelDialog(
     'editGroup',
     { groupId: group.id, groupName: group.name },
-    [{ key: 'name', label: '分组名称', type: 'input' }]
+    [{ key: 'groupName', label: '分组名称', type: 'input' }]
   );
 };
 // 添加分组项（打开弹窗）
 const handleAddGroupItem = (group: StockGroup) => {
-  emit('addStockToGroup', { groupId: group.id });
+  emit('addGroupItem', { groupId: group.id });
 };
 // 删除分组项
 const handleDeleteGroupItem = (group: StockGroup, item: StockItem) => {
@@ -189,9 +192,9 @@ const handleDeleteGroupItem = (group: StockGroup, item: StockItem) => {
 const handleEditGroupItem = (group: StockGroup, item: StockItem) => {
   openPanelDialog(
     'editItem',
-    { groupId: group.id, itemId: item.id, name: item.name, notes: item.notes },
+    { groupId: group.id, itemId: item.id, itemName: item.name, notes: item.notes },
     [
-      { key: 'name', label: '股票名称', type: 'input' },
+      { key: 'itemName', label: '股票名称', type: 'input' },
       { key: 'notes', label: '备注', type: 'textarea' }
     ]
   );
@@ -205,16 +208,16 @@ const openPanelDialog = (formType: string, data: any, fields: any) => {
   showPanelDialog.value = true;
 };
 // 提交处理
-const handleFormSubmit = (formType: string, data: any) => {
-  console.log('handleFormSubmit', formType, data)
-  if (formType === 'editGroup') {
-    emit('editGroup', data);
-  } else if (formType === 'editItem') {
-    emit('editStock', data);
-  } else if (formType === 'addGroup') {
-    emit('addGroup', data);
-  } else if (formType === 'addItem') {
-    emit('addStockToGroup', data);
+const handleFormSubmit = (obj: {formType: string; data: any }) => {
+  console.log('handleFormSubmit', obj.formType, obj.data)
+  if (obj.formType === 'editGroup') {
+    emit('editGroup', obj.data);
+  } else if (obj.formType === 'editItem') {
+    emit('editStock', obj.data);
+  } else if (obj.formType === 'addGroup') {
+    emit('addGroup', obj.data);
+  } else if (obj.formType === 'addItem') {
+    emit('addGroupItem', obj.data);
   }
   showPanelDialog.value = false;
 };

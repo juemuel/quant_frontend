@@ -61,7 +61,7 @@
       <div v-if="activeItem === 'groups'" class="drawer-panel">
         <StockGroupPanel :stock-groups-data="stockGroups"
           @add-group="onAddGroup" @delete-group="onDeleteGroup" @edit-group="onEditGroup"
-          @add-stock-to-group="onAddStockToGroup" @delete-stock="onDeleteStock" @edit-stock="onEditStock"
+          @add-group-item="onAddGroupItem" @delete-stock="onDeleteStock" @edit-stock="onEditStock"
           @search="onSearchGroupList"
         />
       </div>
@@ -224,45 +224,63 @@ watch(drawerVisible, (newVal) => {
   }
 });
 
-// 事件处理方法 (从 StockGroupPanel 接收事件)
-const onAddGroup = async (newGroup: StockGroup) => {
+// 添加分组
+const onAddGroup = async (params: any) => {
+  console.log('Event: Handle Add Group', params);
   try {
     const response = await homeApi.createGroup({
-      typeCode: newGroup.typeCode,
-      name: newGroup.name,
-      ownerId: newGroup.ownerId
+      typeCode: 'stock', // 写死
+      name: params.groupName,
+      ownerId: localStorage.getItem('id') || '',
     });
     console.log('Group created:', response);
-
-    if (response && response.id) {
-      stockGroups.value.push(response);
+    if (response.code === 200) {
+      ElMessage.success('分组添加成功');
+      response.data.items = []
+      stockGroups.value.push(response.data);
     } else {
-      ElMessage.error('创建分组失败');
+      ElMessage.error('分组添加失败');
     }
   } catch (error) {
     console.error('Error creating group:', error);
     ElMessage.error('创建分组失败');
   }
 };
-
-const onEditGroup = async (groupToEdit: StockGroup) => {
-  console.log('edit')
+// 编辑分组
+const onEditGroup = async (params: any) => {
+  console.log('Event: Handle Edit Group', params);
+  try {
+    const response = await homeApi.updateGroup({
+      groupId: params.groupId,
+      typeCode: 'stock', // 写死
+      name: params.groupName,
+      ownerId: localStorage.getItem('id') || '',
+    });
+    console.log('Group updated:', response);
+    if (response.code === 200) {
+      ElMessage.success('分组更新成功');
+      const group = stockGroups.value.find(g => g.id === params.groupId)
+      group && (group.name = params.groupName)
+    } else {
+      ElMessage.error('分组更新失败');
+    }
+  } catch (error) {
+    console.error('Error updating group:', error);
+    ElMessage.error('更新分组失败');
+  }
 };
-/**
- * 删除分组
- * @param obj
- */
-const onDeleteGroup = async (obj: any) => {
-  console.log('Event: Handle Delect Group', obj);
+// 删除分组
+const onDeleteGroup = async (params: any) => {
+  console.log('Event: Handle Delect Group', params);
   try {
     const response = await homeApi.deleteGroup({
-      groupId: obj.groupId,
+      groupId: params.groupId,
       ownerId: localStorage.getItem('id') || '',
     });
     console.log('Group deleted:', response);
     if (response.code === 200) {
       ElMessage.success('分组删除成功');
-      stockGroups.value = stockGroups.value.filter(g => g.id !== obj.id);
+      stockGroups.value = stockGroups.value.filter(g => g.id !== params.groupId);
     } else {
       ElMessage.error('分组删除失败');
     }
@@ -271,16 +289,17 @@ const onDeleteGroup = async (obj: any) => {
     ElMessage.error('删除分组失败');
   }
 };
-const onAddStockToGroup = async (stockItem: StockItem) => {
+// 添加分组项
+const onAddGroupItem = async (params: any) => {
   try {
     const response = await homeApi.addGroupItem({
-      groupId: stockItem.groupId,
-      itemName: stockItem.name,
-      customData: stockItem.customData,
+      groupId: params.groupId,
+      itemName: params.name,
+      customData: params.customData,
       ownerId: localStorage.getItem('ownerId') || '',
     });
     console.log('Stock added to group:', response);
-    const group = stockGroups.value.find(g => g.id === stockItem.groupId);
+    const group = stockGroups.value.find(g => g.id === params.groupId);
     if (group && response && response.id) {
       group.items.push(response);
       ElMessage.success('股票添加成功');
@@ -290,20 +309,30 @@ const onAddStockToGroup = async (stockItem: StockItem) => {
     ElMessage.error('添加股票失败');
   }
 };
-const onEditStock = async (stockItem: StockItem) => {
-  console.log('Event: Edit stock in GlobalSideToolbar', stockItem.name);
+// 编辑分组项
+const onEditStock = async (params: any) => {
+  console.log('Event: Edit stock in GlobalSideToolbar', params.name);
   try {
     const response = await homeApi.updateGroupItem({
-      groupId: stockItem.groupId,
-      itemId: stockItem.id,
-      itemName: stockItem.name,
-      notes: stockItem.notes,
-      customData: stockItem.customData,
+      groupId: params.groupId,
+      itemId: params.itemId,
+      itemName: params.itemName,
+      notes: params.notes,
+      // customData: params.customData,
       ownerId: localStorage.getItem('id') || '',
     });
     console.log('Stock edited:', response);
     if (response.code === 200) {
       ElMessage.success('股票编辑成功');
+      const group = stockGroups.value.find(g => g.id === params.groupId);
+      if (group) {
+        const stock = group.items.find(s => s.id === params.itemId);
+        if (stock) {
+          stock.name = params.itemName;
+          stock.notes = params.notes;
+          // stock.customData = params.customData;
+        }
+      }
     } else {
       ElMessage.error('股票编辑失败');
     }
@@ -316,19 +345,19 @@ const onEditStock = async (stockItem: StockItem) => {
  * 删除股票
  * @param obj 股票
  */
-const onDeleteStock = async (obj: any) => {
-  console.log('Event: Handle Delect Stock', obj);
+const onDeleteStock = async (params: any) => {
+  console.log('Event: Handle Delect Stock', params);
   try {
     const response = await homeApi.deleteGroupItem({
-      itemId: obj.stockId,
+      itemId: params.stockId,
       ownerId: localStorage.getItem('id') || ''
     });
     console.log('Stock deleted:', response);
     if (response.code === 200) {
       ElMessage.success('股票删除成功');
-      const group = stockGroups.value.find(g => g.id === obj.groupId);
+      const group = stockGroups.value.find(g => g.id === params.groupId);
       if (group) {
-        group.items = group.items.filter(s => s.id !== obj.stockId);
+        group.items = group.items.filter(s => s.id !== params.stockId);
       }
     } else {
       ElMessage.error('股票删除失败');
@@ -342,13 +371,13 @@ const onDeleteStock = async (obj: any) => {
  * 获取分组列表
  * @param keyword 关键字
  */
-const onSearchGroupList = async (obj: any) => {
-  console.log('Event: Handle Search StockList', obj);
+const onSearchGroupList = async (params: any) => {
+  console.log('Event: Handle Search StockList', params);
   try {
     const response = await homeApi.getGroupList({
       userId: localStorage.getItem('id'),
       typeCode: 'stock',
-      keyword: obj.keyword
+      keyword: params.keyword
     });
     console.log('[API]Result getGroupList', response)
 
