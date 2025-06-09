@@ -529,7 +529,6 @@ const onSearchGroupList = async (params: any) => {
   flex-direction: column;
   gap: 12px;
   min-height: 100%;
-  background-color: #f5f7fa;
 }
 
 /* 日志项 */
