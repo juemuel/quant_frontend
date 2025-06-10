@@ -244,10 +244,11 @@ const data = reactive({
   trendIncomes: [] // 计算的年趋势收益数组收益数组
 })
 
-onMounted(() => {
-  initData()
+onMounted(async () => {
+  await initData(); // 等待数据加载完成
   nextTick(() => {
     initGraph();
+    updateGraph(); // 初始化后立即更新图表
   });
 })
 function initData () {
@@ -536,6 +537,7 @@ const simulate = async () => {
         getIncomeDatas(res.data.annualProfits, res.data.incomeStastics)
       }
       data.loading = false
+      updateGraph(); // 添加此行
     })
   } catch (error) {
     console.error('Failed to simulate:', error)
@@ -580,10 +582,10 @@ function clearTradesDatas () {
  * @param maDatas
  * @returns indexDatas、profits、maDatas；dates、maValues、profitValues
  */
-function getIndexDatasAndMADatas (indexDatas, profits, maDatas) {
+function getIndexDatasAndMADatas (indexDatas: any, profits: any, maDatas: any) {
   try {
     data.indexDatas = indexDatas;
-    data.maDatas = maDatas.map(item => ({
+    data.maDatas = maDatas.map((item: any) => ({
       date: item.date,
       ma10: item.value[0],
       ma20: item.value[1],
@@ -605,7 +607,7 @@ function getIndexDatasAndMADatas (indexDatas, profits, maDatas) {
       const ma = data.maDatas[i];
       data.maValues.push(ma.value);
     }
-    console.log('获取指数数据和均线数据成功')
+    console.log('获取指数数据和均线数据成功', data.profitValues, data.maValues)
   } catch (error) {
     console.error('Failed to get indexDatasAndMADatas:', error)
   }
@@ -627,6 +629,7 @@ function getTradesDatas (trades, tradeStastics) {
       totalTradeCount: item.winCount + item.lossCount,
       winRate: ((item.winCount / (item.winCount + item.lossCount)) * 100).toFixed(2)
     }))
+    console.log('获取交易类数据成功', data.tradeStastics)
   } catch (error) {
     console.error('Failed to getTradesDatas:', error)
   }
@@ -650,7 +653,7 @@ function getIncomeDatas (annualProfits, incomeStastics) {
       title: item.title,
       incomeAnnual: item.incomeAnnual
     }))
-    console.log('获取收益数据和收益小结成功')
+    console.log('获取收益数据和收益小结成功', data.incomeStastics)
   } catch (error) {
     console.error('Failed to getIncomeDatas:', error)
   }
