@@ -175,14 +175,20 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import axios from 'axios';
 import DateUtils from '@/utils/DateUtils'
 import { nextTick, ref, onMounted, reactive, onUnmounted } from 'vue'
 import * as echarts from 'echarts';
 import quantApi from '@/api/quantApi'
+import { ElMessage } from 'element-plus';
+
 const profitLineChartRef = ref(null);
 const annualIncomeChartRef = ref(null);
+interface IndexOption {
+  code: string;
+  name: string;
+}
 const data = reactive({
   initialScale: 600,
   largestScale: 1300,
@@ -192,12 +198,7 @@ const data = reactive({
   activeIncomeTab: 'first',
   activeProfitTab: 'first',
   // 1. 配置项
-  indexes: [ // 指数选择列表
-    {
-      code: '',
-      name: ''
-    }
-  ],
+  indexes: [] as IndexOption[],
   tacticsList: [{ // 投资类型选择列表
     id: 0,
     name: '趋势投资'
@@ -249,11 +250,18 @@ onMounted(() => {
     initGraph();
   });
 })
-async function initData () {
+function initData () {
+  getIndexCodes()
+}
+async function getIndexCodes() {
   try {
-    const fetchIndexesRes = await fetchIndexes()
-    if (fetchIndexesRes.status === 200) {
+    const response = await quantApi.getIndexes({})
+    if (response.code === 200) {
+      ElMessage.success('获取指数列表成功！');
+      data.indexes = response.data;
       onSearch();
+    } else {
+      ElMessage.error('获取指数列表失败！');
     }
   } catch (error) {
     console.error('Error in fetchIndexes:', error);
@@ -505,22 +513,6 @@ const observeChartResize = (chartContainer, chartInstance) => {
     }
   });
 };
-const fetchIndexes = async () => {
-  return new Promise((resolve, reject) => {
-    quantApi.getIndexes({}).then((res) => {
-      console.log('[api][res]/index-codes/getCodes', res);
-      if (res.status === 200) {
-        data.indexes = [...res.data];
-        resolve(res);
-      } else {
-        reject(new Error('Failed to fetch indexes'));
-      }
-    }).catch((error) => {
-      console.error('Failed to fetch indexes:', error);
-      reject(error);
-    });
-  });
-};
 const simulate = async () => {
   try {
     // data.startDate = DateUtils.formatDate(data.startDate, 'yyyy-MM-dd')
@@ -532,7 +524,7 @@ const simulate = async () => {
     }
     quantApi.simulateTest(params).then((res) => {
       console.log('[api][res]/backtest/simulate', res)
-      if (res.status === 200) {
+      if (res.code === 200) {
         data.indexStartDate = res.data.indexStartDate;
         data.indexEndDate = res.data.indexEndDate;
         data.years = res.data.years

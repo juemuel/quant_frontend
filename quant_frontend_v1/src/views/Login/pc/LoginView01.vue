@@ -48,8 +48,7 @@ const login = async () => {
     }
     loginApi.login(params).then((res) => {
       console.log('res', res)
-      if (res.code === 200 || res.code === "200") {
-        console.log('res', res)
+      if (res.code === 200) {
         ElMessage.success('登录成功')
         store.commit('userInfoModule/loginChange', {
           userName: data.loginForm.username,
