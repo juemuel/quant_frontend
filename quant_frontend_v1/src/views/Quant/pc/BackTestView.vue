@@ -410,6 +410,9 @@ const simulate = async () => {
         getTradesDatas(res.data.trades, res.data.tradeStastics)
         clearIncomeDatas()
         getIncomeDatas(res.data.annualProfits, res.data.incomeStastics)
+        ElMessage.success('模拟成功！');
+      } else {
+        ElMessage.error('模拟失败！');
       }
       data.loading = false
     })
