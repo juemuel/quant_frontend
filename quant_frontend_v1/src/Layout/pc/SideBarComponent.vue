@@ -181,7 +181,7 @@ const data = {
   overflow-y: auto;
   padding-bottom: 60px;
 
-  // 优化菜单滚动条样式
+  //tips: 优化菜单滚动条样式
   &::-webkit-scrollbar {
     width: 6px;
   }
