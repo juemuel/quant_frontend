@@ -2,7 +2,7 @@
   <div class="page-container">
     <el-container style="height: 100%;">
       <el-aside class="side-bar" :class="{ 'is-collapsed': isCollapse }">
-        <div class="title" :class="{ 'is-collapsed': isCollapse }">{{ isCollapse ? 'Jue' : 'Juemuel\'s Workspace' }}</div>
+        <div class="title" :class="{ 'is-collapsed': isCollapse }">{{ isCollapse ? '觉目' : '觉目量化' }}</div>
         <SideBarComponent v-model:is-collapse="isCollapse" />
       </el-aside>
       <el-container class="main-container" :class="{ 'is-collapsed': isCollapse }">

@@ -179,6 +179,25 @@ const data = {
 .menu-container {
   flex: 1;
   overflow-y: auto;
+  padding-bottom: 60px;
+
+  // 优化菜单滚动条样式
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background-color: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: #59708a;
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background-color: #6c8ba4;
+  }
 }
 
 .el-menu-vertical-demo {
