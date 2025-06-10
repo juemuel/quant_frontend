@@ -88,10 +88,21 @@
           </el-table>
         </el-tab-pane>
         <el-tab-pane label="收益折线图√" name="second">
-          <div class="chart-container" ref="profitLineChartRef"></div>
+          <ProfitLineChart
+            v-if="data.activeIncomeTab === 'second'"
+            :dates="data.dates"
+            :close-points="data.closePoints"
+            :profit-values="data.profitValues"
+            :ma-datas="data.maDatas"
+          />
         </el-tab-pane>
         <el-tab-pane label="收益年分布图√" name="third">
-          <div class="chart-container" ref="annualIncomeChartRef"></div>
+          <AnnualIncomeChart
+            v-if="data.activeIncomeTab === 'third'"
+            :annuals="data.annuals"
+            :index-incomes="data.indexIncomes"
+            :trend-incomes="data.trendIncomes"
+          />
         </el-tab-pane>
         <el-tab-pane label="收益年分布表√" name="forth">
           <el-table :data="data.annualProfits" :loading="data.isSimulateLoading" :key="Math.random()" stripe style="width: 100%">
@@ -176,20 +187,132 @@
 </template>
 
 <script setup lang="ts">
-import axios from 'axios';
 import DateUtils from '@/utils/DateUtils'
 import { nextTick, ref, onMounted, reactive, onUnmounted } from 'vue'
-import * as echarts from 'echarts';
 import quantApi from '@/api/quantApi'
 import { ElMessage } from 'element-plus';
-
-const profitLineChartRef = ref(null);
-const annualIncomeChartRef = ref(null);
+import ProfitLineChart from '@/components/pc/Charts/ProfitLineChart.vue'
+import AnnualIncomeChart from '@/components/pc/Charts/AnnualIncomeChart.vue'
+/**
+ * 指数选项
+ */
 interface IndexOption {
-  code: string;
-  name: string;
+  code: string
+  name: string
 }
-const data = reactive({
+
+/**
+ * 某日的MA均线数据
+ */
+interface MaData {
+  date: string
+  ma10?: number
+  ma20?: number
+  ma30?: number
+  ma50?: number
+  ma100?: number
+}
+/**
+ * 收益数据
+ */
+interface ProfitData {
+  value: number
+}
+
+/**
+ * 指数数据项
+ */
+interface IndexData {
+  date: string
+  closePoint: number
+}
+/**
+ * 年度收益数据项
+ */
+interface AnnualProfit {
+  year: string
+  indexIncome: number // 指数年收益率
+  trendIncome: number // 趋势投资年收益率
+}
+/**
+ * 收益小结
+ */
+interface IncomeStatistic {
+  title: string // 投资类型
+  years: string // 投资时长（字符串形式）
+  incomeTotal: number // 总收益率
+  incomeAnnual: number // 年化收益率
+}
+/**
+ * 交易统计数据
+ */
+interface TradeStatistic {
+  winCount: number // 盈利次数
+  lossCount: number // 亏损次数
+  avgWinRate: number // 平均盈利比率
+  avgLossRate: number // 平均亏损比率
+  totalTradeCount: number // 总交易次数
+  winRate: number // 胜率
+}
+/**
+ * 交易明细
+ */
+interface TradeDetail {
+  buyDate: string
+  buyClosePoint: number
+  sellDate: string
+  sellClosePoint: number
+  rate: number
+}
+/**
+ * 整体数据状态
+ */
+interface BackTestData {
+  initialScale: number
+  largestScale: number
+  resizeTimeout: number | null
+  loading: boolean
+  isSimulateLoading: boolean
+  activeIncomeTab: string
+  activeProfitTab: string
+
+  indexes: IndexOption[] // 指数列表
+  tacticsList: { id: number; name: string }[] // 投资策略列表
+  currentIndex: string // 当前选中的指数代码
+  ma: number // 均线天数
+  serviceCharge: number // 手续费率
+  buyThreshold: number // 购买阈值
+  sellThreshold: number // 出售阈值
+  startDate: string | null // 开始日期
+  endDate: string | null // 结束日期
+
+  // 数据源
+  indexDatas: IndexData[] // 指数原始数据
+  maDatas: MaData[] // 均线数据
+  profits: ProfitData[] // 日收益数据
+  indexStartDate: string | null
+  indexEndDate: string | null
+
+  // 图表用数据
+  dates: string[]
+  closePoints: number[]
+  profitValues: number[]
+  maValues: number[]
+
+  // 交易相关
+  trades: TradeDetail[]
+  tradeStastics: TradeStatistic[]
+
+  // 收益统计
+  years: number
+  annualProfits: AnnualProfit[]
+  incomeStastics: IncomeStatistic[]
+
+  annuals: string[]
+  indexIncomes: number[]
+  trendIncomes: number[]
+}
+const data = reactive<BackTestData>({
   initialScale: 600,
   largestScale: 1300,
   resizeTimeout: null,
@@ -197,12 +320,9 @@ const data = reactive({
   isSimulateLoading: true,
   activeIncomeTab: 'first',
   activeProfitTab: 'first',
-  // 1. 配置项
-  indexes: [] as IndexOption[],
-  tacticsList: [{ // 投资类型选择列表
-    id: 0,
-    name: '趋势投资'
-  }],
+  // 指数配置
+  indexes: [],
+  tacticsList: [{ id: 0, name: '趋势投资' }], // 投资类型选择列表
   currentIndex: '000300', // 表单-选中的指数
   ma: 20, // 表单-均线
   serviceCharge: 0.0, // 表单-手续费
@@ -210,17 +330,18 @@ const data = reactive({
   sellThreshold: 0.99, // 表单-出售阈值
   startDate: null, // 表单-开始时间
   endDate: null, // 表单-结束时间
-  // 2. 指数+均线+本身收益数据（3个api数组，4个计算）
+  // 数据源（指数+均线+本身收益数据（3个api数组，4个计算）
   indexDatas: [], // api某指数数据（对应的date日期、closePoints收盘价）
   maDatas: [], // api某指数均线数据
   profits: [], // api指数本身的日收益数据
   indexStartDate: null, // 当前指数的开始日期
   indexEndDate: null, // 当前指数的结束日期
+  // 图表用数据
   dates: [], // 计算的日期数组
   closePoints: [], // 计算的指数收盘价
   profitValues: [], // 计算的指数本身日收益数组（用于图表显示）
   maValues: [], // 计算的指数均线值（用于图表显示）
-  // 3. 交易数据（1个api数组，4个api字段+2个计算）
+  // 交易数据（1个api数组，4个api字段+2个计算）
   trades: [], // api交易数组
   tradeStastics: [{
     winCount: 0, // 盈利次数
@@ -230,7 +351,7 @@ const data = reactive({
     totalTradeCount: 0, // 计算的总交易次数：winCount+lossCount
     winRate: 0 // 计算的胜率：((winCount/(winCount+lossCount))*100).toFixed(2)
   }],
-  // 4. 收益数据（1个api数组，4个api字段，4计算）
+  // 收益统计（1个api数组，4个api字段，4计算）
   years: 0, // 投资持续年时长
   annualProfits: [], // api多类目年收益数组（年份year、指数收益indexIncome、趋势投资收益trendIncome）
   incomeStastics: [{
@@ -243,13 +364,8 @@ const data = reactive({
   indexIncomes: [], // 计算的年指数收益数组
   trendIncomes: [] // 计算的年趋势收益数组收益数组
 })
-
 onMounted(async () => {
   await initData(); // 等待数据加载完成
-  nextTick(() => {
-    initGraph();
-    updateGraph(); // 初始化后立即更新图表
-  });
 })
 function initData () {
   getIndexCodes()
@@ -268,251 +384,10 @@ async function getIndexCodes() {
     console.error('Error in fetchIndexes:', error);
   }
 }
-const initGraph = () => {
-  initProfitLineChart();
-  initAnnualIncomeChart();
-}
-const updateGraph = () => {
-  updateProfitLineChart();
-  updateAnnualIncomeChart();
-}
-function initProfitLineChart () {
-  const chart4Profit = echarts.init(profitLineChartRef.value);
-  const option = {
-    title: {
-      text: '收益折线图'
-    },
-    tooltip: {
-      trigger: 'axis',
-      axisPointer: {
-        type: 'cross'
-      }
-    },
-    legend: {
-      data: ['指数数据', '趋势投资', 'MA10', 'MA20', 'MA30', 'MA50', 'MA100']
-    },
-    xAxis: {
-      type: 'category',
-      boundaryGap: false,
-      data: data.dates
-    },
-    dataZoom: {
-      type: 'inside' // 放大缩小x轴数值
-    },
-    yAxis: {
-      type: 'value'
-    },
-    series: [
-      {
-        name: '指数数据',
-        type: 'line',
-        data: data.closePoints,
-        lineStyle: {
-          color: '#FF4040'
-        }
-      },
-      {
-        name: '趋势投资',
-        type: 'line',
-        data: data.profitValues,
-        lineStyle: {
-          color: '#5D98C8'
-        }
-      },
-      {
-        name: 'MA10',
-        type: 'line',
-        data: data.maDatas.map(d => d.ma10),
-        symbol: 'none',
-        lineStyle: {
-          color: '#00FF00'
-        }
-      },
-      {
-        name: 'MA20',
-        type: 'line',
-        data: data.maDatas.map(d => d.ma20),
-        symbol: 'none',
-        lineStyle: {
-          color: '#FF00FF'
-        }
-      },
-      {
-        name: 'MA30',
-        type: 'line',
-        data: data.maDatas.map(d => d.ma30),
-        symbol: 'none',
-        lineStyle: {
-          color: '#00FFFF'
-        }
-      },
-      {
-        name: 'MA50',
-        type: 'line',
-        data: data.maDatas.map(d => d.ma50),
-        symbol: 'none',
-        lineStyle: {
-          color: '#FFA500'
-        }
-      },
-      {
-        name: 'MA100',
-        type: 'line',
-        data: data.maDatas.map(d => d.ma100),
-        symbol: 'none',
-        lineStyle: {
-          color: '#800080'
-        }
-      }
-    ]
-  };
-  chart4Profit.setOption(option);
-  observeChartResize(profitLineChartRef.value, chart4Profit);
-}
-function initAnnualIncomeChart () {
-  const chart4AnnualIncome = echarts.init(annualIncomeChartRef.value);
-  const option = {
-    title: {
-      text: '指数/趋势收益分布对比图'
-    },
-    tooltip: {
-      trigger: 'axis'
-    },
-    legend: {
-      data: ['指数数据', '趋势投资']
-    },
-    xAxis: {
-      type: 'category',
-      data: data.annuals
-    },
-    yAxis: {
-      type: 'value'
-    },
-    series: [
-      {
-        name: '指数数据',
-        type: 'bar',
-        data: data.indexIncomes,
-        itemStyle: {
-          color: '#FF4040'
-        }
-      },
-      {
-        name: '趋势投资',
-        type: 'bar',
-        data: data.trendIncomes,
-        itemStyle: {
-          color: '#5D98C8'
-        }
-      }
-    ]
-  };
-  chart4AnnualIncome.setOption(option);
-  observeChartResize(annualIncomeChartRef.value, chart4AnnualIncome);
-}
-const updateProfitLineChart = () => {
-  if (!profitLineChartRef.value) return;
-  let chart4Profit = echarts.getInstanceByDom(profitLineChartRef.value);
-  if (!chart4Profit) {
-    chart4Profit = echarts.init(profitLineChartRef.value);
-  }
-
-  const option = {
-    xAxis: {
-      data: data.dates
-    },
-    yAxis: {
-      max: 'auto',
-      min: 'auto'
-    },
-    series: [
-      {
-        name: '指数数据',
-        data: data.closePoints
-      },
-      {
-        name: '趋势投资',
-        data: data.profitValues
-      },
-      {
-        name: 'MA10',
-        data: data.maDatas.map(d => d.ma10)
-      },
-      {
-        name: 'MA20',
-        data: data.maDatas.map(d => d.ma20)
-      },
-      {
-        name: 'MA30',
-        data: data.maDatas.map(d => d.ma30)
-      },
-      {
-        name: 'MA50',
-        data: data.maDatas.map(d => d.ma50)
-      },
-      {
-        name: 'MA100',
-        data: data.maDatas.map(d => d.ma100)
-      }
-    ]
-  };
-
-  chart4Profit.setOption(option);
-};
-
-const updateAnnualIncomeChart = () => {
-  if (!annualIncomeChartRef.value) return;
-  let chart4AnnualIncome = echarts.getInstanceByDom(annualIncomeChartRef.value);
-  if (!chart4AnnualIncome) {
-    chart4AnnualIncome = echarts.init(annualIncomeChartRef.value);
-  }
-  const option = {
-    xAxis: {
-      data: data.annuals
-    },
-    series: [
-      {
-        name: '指数数据',
-        data: data.indexIncomes
-      },
-      {
-        name: '趋势投资',
-        data: data.trendIncomes
-      }
-    ]
-  };
-  chart4AnnualIncome.setOption(option);
-};
 const handleTabChange = () => {
-  nextTick(() => {
-    if (profitLineChartRef.value) {
-      const chart4Profit = echarts.getInstanceByDom(profitLineChartRef.value);
-      if (chart4Profit) chart4Profit.resize();
-    }
-    if (annualIncomeChartRef.value) {
-      const chart4AnnualIncome = echarts.getInstanceByDom(annualIncomeChartRef.value);
-      if (chart4AnnualIncome) chart4AnnualIncome.resize();
-    }
-  });
-};
-
-const observeChartResize = (chartContainer, chartInstance) => {
-  const resizeObserver = new ResizeObserver(() => {
-    if (chartInstance && !chartInstance.isDisposed()) {
-      chartInstance.resize();
-    }
-  });
-
-  resizeObserver.observe(chartContainer);
-
-  onUnmounted(() => {
-    if (resizeObserver) {
-      resizeObserver.disconnect();
-    }
-    if (chartInstance && !chartInstance.isDisposed()) {
-      chartInstance.dispose();
-    }
-  });
+  setTimeout(() => {
+    window.dispatchEvent(new Event('resize'));
+  }, 50);
 };
 const simulate = async () => {
   try {
@@ -537,7 +412,6 @@ const simulate = async () => {
         getIncomeDatas(res.data.annualProfits, res.data.incomeStastics)
       }
       data.loading = false
-      updateGraph(); // 添加此行
     })
   } catch (error) {
     console.error('Failed to simulate:', error)
@@ -618,7 +492,7 @@ function getIndexDatasAndMADatas (indexDatas: any, profits: any, maDatas: any) {
  * @param tradeStastics 交易小结数组[{盈利交易次数、亏损交易次数、平均盈利比率、平均亏损比率}]->计算[总交易次数、胜率]
  * @returns trades、tradeStastics
  */
-function getTradesDatas (trades, tradeStastics) {
+function getTradesDatas(trades: TradeDetail[], tradeStastics: TradeStatistic[]) {
   try {
     data.trades = trades
     data.tradeStastics = tradeStastics.map(item => ({
@@ -627,7 +501,7 @@ function getTradesDatas (trades, tradeStastics) {
       avgWinRate: item.avgWinRate,
       avgLossRate: item.avgLossRate,
       totalTradeCount: item.winCount + item.lossCount,
-      winRate: ((item.winCount / (item.winCount + item.lossCount)) * 100).toFixed(2)
+      winRate: parseFloat(((item.winCount / (item.winCount + item.lossCount)) * 100).toFixed(2))
     }))
     console.log('获取交易类数据成功', data.tradeStastics)
   } catch (error) {
@@ -639,7 +513,7 @@ function getTradesDatas (trades, tradeStastics) {
  * @param annualProfits 收益数据[{年份、年指数收益、年趋势收益}]，
  * @param incomeStastics 收益小结[{某策略总交易次数、某策略总交易收益、总交易收益率、总盈利交易次数、总盈利交易收益、总盈利交易收益率、某策略总亏损交易次数、某策略总亏损交易收益、某策略总亏损交易收益率}]
  */
-function getIncomeDatas (annualProfits, incomeStastics) {
+function getIncomeDatas(annualProfits: AnnualProfit[], incomeStastics: IncomeStatistic[]) {
   try {
     data.annualProfits = annualProfits;
     for (let i = 0; i < annualProfits.length; i++) {
@@ -660,15 +534,6 @@ function getIncomeDatas (annualProfits, incomeStastics) {
 }
 const onSearch = () => {
   simulate();
-  updateGraph()
-}
-
-const handleIncomeClick = (tab, event) => {
-  updateGraph()
-}
-
-const handleProfitClick = (tab, event) => {
-  updateGraph()
 }
 </script>
 
