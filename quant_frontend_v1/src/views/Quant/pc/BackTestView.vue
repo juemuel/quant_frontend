@@ -68,10 +68,10 @@
       </el-form>
       <!-- 标签页 -->
       <el-tabs v-model="data.activeIncomeTab" @tab-click="handleTabChange">
-        <el-tab-pane label="收益小结√" name="first">
-          <el-table :data="data.incomeStastics" :loading="data.isSimulateLoading" :key="Math.random()" stripe
+        <el-tab-pane label="策略收益" name="first">
+          <el-table :data="data.tradeProfitList" :loading="data.isSimulateLoading" :key="Math.random()" stripe
             style="width: 100%">
-            <el-table-column prop="title" label="投资类型" align="center"></el-table-column>
+            <el-table-column prop="title" label="策略名称" align="center"></el-table-column>
             <el-table-column prop="years" label="投资时长 (年)" align="center">
             </el-table-column>
             <el-table-column prop="totalRate" label="1000元投资收益" align="center">
@@ -84,9 +84,9 @@
                 {{ (scope.row.totalRate * 100).toFixed(2) }}%
               </template>
             </el-table-column>
-            <el-table-column prop="incomeAnnual" label="年化收益率" align="center">
+            <el-table-column prop="annualRate" label="年化收益率" align="center">
               <template #default="scope">
-                {{ (scope.row.incomeAnnual * 100).toFixed(2) }}%
+                {{ (scope.row.annualRate * 100).toFixed(2) }}%
               </template>
             </el-table-column>
           </el-table>
@@ -96,8 +96,8 @@
             :profit-values="data.profitValues" :ma-datas="data.maDatas" />
         </el-tab-pane>
         <el-tab-pane label="收益年分布图√" name="third">
-          <AnnualIncomeChart v-if="data.activeIncomeTab === 'third'" :annuals="data.annuals"
-            :index-incomes="data.indexIncomes" :trend-incomes="data.tradeIncomes" />
+          <!-- <AnnualIncomeChart v-if="data.activeIncomeTab === 'third'" :annuals="data.annuals"
+            :index-incomes="data.indexIncomes" :trend-incomes="data.tradeIncomes" /> -->
         </el-tab-pane>
         <el-tab-pane label="收益年分布表√" name="forth">
           <el-table :data="data.annualProfits" :loading="data.isSimulateLoading" :key="Math.random()" stripe
@@ -122,7 +122,7 @@
       </el-tabs>
       <el-tabs v-model="data.activeProfitTab" @tab-click="handleTabChange">
         <el-tab-pane label="策略交易统计√" name="first">
-          <el-table :data="data.tradeStastics" :loading="data.isSimulateLoading" :key="Math.random()" stripe
+          <el-table :data="data.trade_stats" :loading="data.isSimulateLoading" :key="Math.random()" stripe
             style="width: 100%">
             <el-table-column prop="totalTradeCount" label="总交易次数" align="center"></el-table-column>
             <el-table-column prop="winCount" label="盈利交易次数" align="center"></el-table-column>
@@ -256,9 +256,6 @@ interface TradeDetail {
   rate: number
 }
 const data = reactive({
-  initialScale: 600,
-  largestScale: 1300,
-  resizeTimeout: null,
   loading: true,
   isSimulateLoading: true,
   activeIncomeTab: 'first',
@@ -274,33 +271,22 @@ const data = reactive({
   startDate: null, // 表单-开始时间
   endDate: null, // 表单-结束时间
   // 数据源（指数+均线+本身收益数据（3个api数组，4个计算）
-  indexDatas: [], // api某指数数据（对应的date日期、closePoints收盘价）
-  maDatas: [], // api某指数均线数据
-  profits: [], // api指数本身的日收益数据
-  indexStartDate: null, // 当前指数的开始日期
-  indexEndDate: null, // 当前指数的结束日期
-  // 图表用数据
-  dates: [], // 计算的日期数组
-  closePoints: [], // 计算的指数收盘价
-  profitValues: [], // 计算的指数本身日收益数组（用于图表显示）
-  maValues: [], // 计算的指数均线值（用于图表显示）
-  // 交易数据（1个api数组，4个api字段+2个计算）
-  trades: [], // api交易数组
-  tradeStastics: [{
-    winCount: 0, // 盈利次数
-    lossCount: 0, // 亏损次数
-    avgWinRate: 0, // 平均盈利比率
-    avgLossRate: 0, // 平均亏损比率
-    totalTradeCount: 0, // 计算的总交易次数：winCount+lossCount
-    winRate: 0 // 计算的胜率：((winCount/(winCount+lossCount))*100).toFixed(2)
-  }],
-  // 收益统计（1个api数组，4个api字段，4计算）
-  years: 0, // 投资持续年时长
-  annualProfits: [], // api多类目年收益数组（年份year、指数收益indexIncome、趋势投资收益trendIncome）
-  incomeStastics: [],
+  // maDatas: [], // api某指数均线数据
+  // maValues: [], //TODO :计算的指数均线值（用于图表显示）
+  // 新增数据
+  index_info: {}, 
+  strategy_info: {},
+  trade_profit: {}, // 含有profits和annualProfits
+  trade_stats: {},
+  trade_list: [],
+  // 需计算
+  closePoints: [], // 计算的收盘价数组
   annuals: [], // 计算的年份数组
-  indexIncomes: [], // 计算的年指数收益数组
-  tradeIncomes: [] // 计算的年趋势收益数组收益数组
+  dates: [], // 计算的日期数组
+  profitValues: [], // 计算的日收益数组（用于图表显示）
+  annualProfitValues: [], //  计算的年收益数组（用于图表显示） 
+  multiTradeStats: [], // 计算的交易统计数据（可多个策略）
+  multiTradeAnnualProfits: [], // 计算的年收益数组收益（可多个策略）
 })
 onMounted(async () => {
   await initData(); // 等待数据加载完成
@@ -348,9 +334,12 @@ const simulate = async () => {
     console.log('[api][res]/backtest/simulate', res);
 
     if (res.code === 200) {
-      data.indexStartDate = res.data.indexStartDate;
-      data.indexEndDate = res.data.indexEndDate;
-      data.years = res.data.years;
+      data.index_info = res.data.index_info;
+      data.strategy_info = res.data.strategy_info;
+      data.trade_profit = res.data.trade_profit;
+      data.trade_stats = res.data.trade_stats;
+      data.trade_list = res.data.trades;
+
 
       clearIndexCommonData();
       getIndexCommonData(res.data.indexDatas, res.data.maDatas);
@@ -385,9 +374,8 @@ function clearIndexCommonData() {
  * 清空持续年、收益数据、收益小结；计算的年份数组、指数收益数组、趋势收益数组
  */
 function clearProftDatas() {
-  data.years = 0;
   data.annualProfits = [];
-  data.incomeStastics = [];
+  data.tradeProfitList = [];
   data.annuals = [];
   data.indexIncomes = [];
   data.tradeIncomes = []
@@ -467,7 +455,7 @@ function getTradesDatas(trades: TradeDetail[], tradeStastics: TradeStatistic[]) 
 /**
  * 获取收益类数据
  * @param annualProfits 收益数据[{年份、年指数收益、年趋势收益}]，
- * @param incomeStastics 收益小结[{某策略总交易次数、某策略总交易收益、总交易收益率、总盈利交易次数、总盈利交易收益、总盈利交易收益率、某策略总亏损交易次数、某策略总亏损交易收益、某策略总亏损交易收益率}]
+ * @param tradeProfitList 策略收益数据[{某策略总交易次数、某策略总交易收益、总交易收益率、总盈利交易次数、总盈利交易收益、总盈利交易收益率、某策略总亏损交易次数、某策略总亏损交易收益、某策略总亏损交易收益率}]
  */
 function getProfitDatas(tradeProfitData: any) {
   try {
@@ -476,14 +464,13 @@ function getProfitDatas(tradeProfitData: any) {
       data.annuals.push(data.annualProfits[i].year);
       data.tradeIncomes.push(data.annualProfits[i].value);
     }
-    data.incomeStastics = [{
+    data.tradeProfitList.push({
         totalRate: tradeProfitData.totalRate,
         years: tradeProfitData.years,
         title: tradeProfitData.title,
-        incomeAnnual: tradeProfitData.incomeAnnual
-      }
-    ]
-    console.log('获取收益数据和收益小结成功', data.incomeStastics)
+        annualRate: tradeProfitData.annualRate,
+      })
+    console.log('获取收益数据和收益小结成功', data.tradeProfitList)
   } catch (error) {
     console.error('Failed to getProfitDatas:', error)
   }
