@@ -13,11 +13,6 @@ const routes: Array<RouteRecordRaw> = [
         path: '/market',
         children: [
           {
-            path: 'myStocks',
-            name: 'myStocks',
-            component: () => import('../views/Market/pc/MyStocksView.vue')
-          },
-          {
             path: 'allStocks',
             name: 'allStocks',
             component: () => import('../views/Market/pc/AllStocksView.vue')
@@ -34,25 +29,40 @@ const routes: Array<RouteRecordRaw> = [
           }
         ]
       },
-      { // 量化中心
+      { // 量化中心（选股中心、策略中心、回测中心）
         path: '/quant',
         children: [
           {
-            path: 'monitor',
-            name: 'monitor',
-            component: () => import('../views/Quant/pc/MonitorView.vue')
+            path: 'stockMarket',
+            name: 'stockMarket',
+            component: () => import('../views/Quant/pc/StockMarketView.vue')
+          },
+          {
+            path: 'strategyMarket',
+            name: 'strategyMarket',
+            component: () => import('../views/Quant/pc/StrategyMarketView.vue')
           },
           {
             path: 'backTest',
             name: 'backTest',
             component: () => import('../views/Quant/pc/BackTestView.vue')
           },
-          {
-            path: 'strategyMarket',
-            name: 'strategyMarket',
-            component: () => import('../views/Quant/pc/StrategyMarketView.vue')
-          }
         ]
+      },
+      { // 我的中心（我的监控、我的自选）
+        path: '/center',
+        children: [
+          {
+            path: 'myMonitor',
+            name: 'myMonitor',
+            component: () => import('../views/Center/pc/MyMonitorView.vue')
+          },
+          {
+            path: 'myStocks',
+            name: 'myStocks',
+            component: () => import('../views/Center/pc/MyStocksView.vue')
+          }
+        ],
       },
       { // 系统管理
         path: '/system',
@@ -69,7 +79,7 @@ const routes: Array<RouteRecordRaw> = [
           }
         ]
       },
-      { // 产品管理
+      { // 产品管理（产品列表、优惠列表、产品）
         path: '/product',
         children: [
           {
@@ -89,7 +99,7 @@ const routes: Array<RouteRecordRaw> = [
           }
         ]
       },
-      { // 订单管理
+      { // 订单管理（订单列表）
         path: '/order',
         children: [
           {

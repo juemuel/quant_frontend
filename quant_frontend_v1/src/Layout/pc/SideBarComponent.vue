@@ -127,10 +127,18 @@ const data = {
       name: '市场行情',
       icon: 'icon-park-outline:market',
       children: [
-        { index: '/market/myStocks', name: '我的自选股', icon: 'subway:mark-2' },
         { index: '/market/allIndex', name: '指数中心', icon: 'hugeicons:market-analysis' },
         { index: '/market/allStocks', name: '股票中心', icon: 'hugeicons:apple-stocks' },
         { index: '/market/allFutures', name: '期货中心', icon: 'token:future' }
+      ]
+    },
+    {
+      index: '/center',
+      name: '操作台',
+      icon: 'icon-park-outline:market',
+      children: [
+        { index: '/center/myStocks', name: '我的自选股', icon: 'subway:mark-2' },
+        { index: '/center/myMonitor', name: '监控系统', icon: 'ep:monitor' },
       ]
     },
     {
@@ -138,7 +146,7 @@ const data = {
       name: '量化系统',
       icon: 'ep:trend-charts',
       children: [
-        { index: '/quant/monitor', name: '监控系统', icon: 'ep:monitor' },
+        { index: '/quant/stocktMarket', name: '选股市场', icon: 'ep:shopping-bag' },
         { index: '/quant/strategyMarket', name: '策略市场', icon: 'ep:shopping-bag' },
         { index: '/quant/backTest', name: '回测系统', icon: 'ep:data-line' }
       ]
