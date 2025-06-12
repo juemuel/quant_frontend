@@ -7,7 +7,7 @@ export default {
     return await http.get(url, params, {})
   },
   simulateTest: async function (params: any): Promise<any> {
-    const url = process.env.VUE_APP_BASE_URL + '/quant/simulate' + params.url
-    return await http.get(url, {}, {})
-  }
+    const url = process.env.VUE_APP_BASE_URL + '/quant/simulate/' + params.strategy
+    return await http.get(url, params, {})
+  },
 }
