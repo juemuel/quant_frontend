@@ -18,17 +18,22 @@
               </div>
               <el-row :gutter="15">
                 <el-col :md="12">
-                  <!-- 策略名称 (示例，如果需要请在data中定义) -->
-                  <el-form-item label="TODO策略名称">
-                    <el-input v-model="data.strategyName" placeholder="例如：双均线策略" />
-                  </el-form-item>
-                </el-col>
-                <el-col :md="12">
                   <el-form-item label="请选择指数">
                     <el-select v-model="data.currentIndex" placeholder="请选择指数" :loading="data.loading"
                       style="width: 100%;">
                       <el-option v-for="item in data.indexes" :key="item.code" :label="`${item.name} - (${item.code})`"
                         :value="item" />
+                    </el-select>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+              <el-row :gutter="15">
+                <el-col :md="12">
+                  <el-form-item label="策略类型">
+                    <el-select v-model="data.strategyType" placeholder="请选择策略类型" style="width: 100%;">
+                      <el-option label="双均线策略" value="ma_strategy" />
+                      <el-option label="RSI策略" value="rsi_strategy" />
+                      <el-option label="MACD策略" value="macd_strategy" />
                     </el-select>
                   </el-form-item>
                 </el-col>
@@ -44,7 +49,7 @@
                 </el-col>
                 <el-col :md="12">
                   <el-form-item label="时间框架">
-                    <el-select v-model="data.timeFrame" placeholder="请选择时间框架" style="width: 100%;">
+                    <el-select v-model="data.strategyTimeFrame" placeholder="请选择时间框架" style="width: 100%;">
                       <el-option label="日线" value="daily" />
                       <el-option label="周线" value="weekly" />
                       <el-option label="月线" value="monthly" />
@@ -70,41 +75,31 @@
             <!-- 信号参数 -->
             <div class="param-section">
               <div class="param-section-header-flex">
-                <div class="section-title"><i class="bi bi-lightning-charge"></i> 信号参数</div>
+                <div class="section-title">
+                  <i class="bi bi-lightning-charge"></i> 信号参数
+                </div>
+                <el-button type="info" size="small" @click="handleResetStrategyParams" :icon="RefreshRight">
+                  重置
+                </el-button>
               </div>
-              <el-row :gutter="15">
-                <el-col :md="12">
-                  <el-form-item label="均线周期 (MA)">
-                    <el-select v-model="data.ma" placeholder="请选择均线" style="width: 100%;">
-                      <el-option label="5日" :value="5" />
-                      <el-option label="10日" :value="10" />
-                      <el-option label="20日" :value="20" />
-                      <el-option label="50日" :value="50" />
-                      <el-option label="100日" :value="100" />
+              <!-- 动态渲染策略参数，每两个一行 -->
+              <el-row :gutter="15" v-for="row in paramRows" :key="row.key">
+                <el-col :md="12" v-for="param in row.params" :key="param.key">
+                  <el-form-item :label="param.label">
+                    <!-- {{ isReactive(param) ? '✅ 响应式' : '❌ 非响应式' }} -->
+                    <el-input v-if="param.type === 'input'" v-model="param.value" :placeholder="getPlaceholder(param)"
+                      :type="typeof param.value === 'number' ? 'number' : 'text'" style="width: 100%;">
+                      <template #append>{{ param.unit }}</template>
+                    </el-input>
+                    <!-- 选择器类型 -->
+                    <el-select v-else-if="param.type === 'select'" v-model="param.value"
+                      :placeholder="'请选择' + param.label" style="width: 100%;">
+                      <el-option v-for="option in param.options" :key="option.value" :label="option.label"
+                        :value="option.value" />
                     </el-select>
-                  </el-form-item>
-                </el-col>
-                <el-col :md="12">
-                  <el-form-item label="均线类型">
-                    <el-select v-model="data.maType" placeholder="请选择均线类型" style="width: 100%;">
-                      <el-option label="SMA" value="SMA" />
-                      <el-option label="EMA" value="EMA" />
-                      <el-option label="WMA" value="WMA" />
-                    </el-select>
-                  </el-form-item>
-                </el-col>
-              </el-row>
-              <el-row :gutter="15">
-                <el-col :md="12">
-                  <!-- 慢线周期 (示例，如果需要请在data中定义 'maSlow') -->
-                  <el-form-item label="*慢线周期 (可选)">
-                    <el-input type="number" v-model="data.strategyParams.maSlowInput" placeholder="例如：20" />
-                  </el-form-item>
-                </el-col>
-                <el-col :md="12">
-                  <!-- 快线周期 (示例，如果需要请在data中定义 'maFast') -->
-                  <el-form-item label="*快线周期 (可选)">
-                    <el-input type="number" v-model="data.strategyParams.maFastInput" placeholder="例如：5" />
+                    <!-- 滑块类型 -->
+                    <el-slider v-else-if="param.type === 'slider'" v-model="param.value" :min="param.min || 0"
+                      :max="param.max || 100" :step="param.step || 1" show-input style="width: 100%;" />
                   </el-form-item>
                 </el-col>
               </el-row>
@@ -132,7 +127,7 @@
                   </el-form-item>
                 </el-col>
               </el-row>
-              <el-row :gutter="15">
+              <!-- <el-row :gutter="15">
                 <el-col :md="12">
                   <el-form-item label="*最小信号强度">
                     <el-input-number v-model="data.tradingParams.minSignalStrength" :step="0.01" :min="0" :max="1"
@@ -141,10 +136,11 @@
                 </el-col>
                 <el-col :md="12">
                   <el-form-item label="*信号确认周期数">
-                    <el-input-number v-model="data.tradingParams.signalConfirmationCandles" :min="1" :max="10" style="width: 100%;" />
+                    <el-input-number v-model="data.tradingParams.signalConfirmationCandles" :min="1" :max="10"
+                      style="width: 100%;" />
                   </el-form-item>
                 </el-col>
-              </el-row>
+              </el-row> -->
             </div>
             <!-- 交易执行 -->
             <div class="param-section">
@@ -156,27 +152,24 @@
                   <el-form-item label="手续费">
                     <el-select v-model="data.tradingParams.serviceCharge" placeholder="请选择手续费" style="width: 100%;">
                       <el-option label="无" :value="0" />
-                      <el-option label="0.1%" :value="0.001" />
-                      <el-option label="0.15%" :value="0.0015" />
-                      <el-option label="0.2%" :value="0.002" />
+                      <el-option label="0.01%" :value="0.0001" />
+                      <el-option label="0.015%" :value="0.00015" />
+                      <el-option label="0.02%" :value="0.0002" />
+                      <el-option label="0.03%" :value="0.0003" />
                     </el-select>
                   </el-form-item>
                 </el-col>
                 <el-col :md="12">
                   <el-form-item label="*滑点比例">
-                    <el-input type="number" step="0.0001" v-model.number="data.tradingParams.slippage" placeholder="例如: 0.1"
-                      style="width: 100%;">
+                    <el-input
+                      type="number"
+                      :step="0.01"
+                      :model-value="(Number(data.tradingParams.fixedSlippage) * 100).toFixed(2)"
+                      @update:model-value="val => data.tradingParams.fixedSlippage = parseFloat((parseFloat(val) / 100).toFixed(4))"
+                      placeholder="例如: 0.1"
+                      style="width: 100%;"
+                    >
                       <template #append>%</template>
-                    </el-input>
-                  </el-form-item>
-                </el-col>
-              </el-row>
-              <el-row :gutter="10">
-                <el-col :md="12">
-                  <el-form-item label="*最小交易金额">
-                    <el-input type="number" v-model.number="data.tradingParams.minTradeAmount" placeholder="例如: 100"
-                      style="width: 100%;">
-                      <template #prepend>¥</template>
                     </el-input>
                   </el-form-item>
                 </el-col>
@@ -196,25 +189,23 @@
               <transition name="slide">
                 <div v-show="data.riskParams.enableRiskManagement">
                   <el-row :gutter="15">
+                    <!-- 风险管理 - 显示百分比格式 -->
                     <el-col :md="12">
-                      <el-form-item label="*最大回撤限制(%)">
-                        <el-input type="number" step="0.1" v-model.number="data.riskParams.maxDrawdown" placeholder="例如: 20.0">
+                      <el-form-item label="*个股止损(%)">
+                        <el-input type="number" step="0.1"
+                          :model-value="(Number(data.riskParams.stopLoss) * 100).toFixed(1)"
+                          @update:model-value="val => data.riskParams.stopLoss = parseFloat((val / 100).toFixed(3))"
+                          placeholder="例如: 8">
                           <template #append>%</template>
                         </el-input>
                       </el-form-item>
                     </el-col>
                     <el-col :md="12">
-                      <el-form-item label="*单日最大损失(%)">
-                        <el-input type="number" step="0.1" v-model.number="data.riskParams.dailyLossLimit" placeholder="例如: 3.0">
-                          <template #append>%</template>
-                        </el-input>
-                      </el-form-item>
-                    </el-col>
-                  </el-row>
-                  <el-row :gutter="15">
-                    <el-col :md="12">
-                      <el-form-item label="*单笔交易风险(%)">
-                        <el-input type="number" step="0.1" v-model.number="data.riskParams.positionRisk" placeholder="例如: 1.0">
+                      <el-form-item label="*个股止盈(%)">
+                        <el-input type="number" step="0.1"
+                          :model-value="(Number(data.riskParams.takeProfit) * 100).toFixed(1)"
+                          @update:model-value="val => data.riskParams.takeProfit = parseFloat((val / 100).toFixed(3))"
+                          placeholder="例如: 15">
                           <template #append>%</template>
                         </el-input>
                       </el-form-item>
@@ -223,7 +214,6 @@
                 </div>
               </transition>
             </div>
-
             <!-- 仓位管理 -->
             <div class="param-section">
               <div class="param-section-header-flex">
@@ -233,30 +223,16 @@
                   <label class="form-check-label" style="margin-left: 8px;">启用</label>
                 </div>
               </div>
-
               <!-- 折叠区域 -->
               <transition name="slide">
                 <div v-show="data.positionParams.enablePositionManagement">
                   <el-row :gutter="15">
                     <el-col :md="12">
                       <el-form-item label="*最大持仓">
-                        <el-input type="number" step="1" v-model.number="data.positionParams.maxPositionsNum" placeholder="例如: 20.0">
-                          <template #append>%</template>
+                        <el-input type="number" step="1" v-model.number="data.positionParams.maxPositionsNum"
+                          placeholder="例如: 20.0">
+                          <template #append>只</template>
                         </el-input>
-                      </el-form-item>
-                    </el-col>
-                    <el-col :md="12">
-                      <el-form-item label="*最小持仓">
-                        <el-input type="number" step="1" v-model.number="data.positionParams.minPositionsNum" placeholder="例如: 1.0">
-                          <template #append>%</template>
-                        </el-input>
-                      </el-form-item>
-                    </el-col>
-                  </el-row>
-                  <el-row :gutter="15">
-                    <el-col :md="12">
-                      <el-form-item label="*最大加仓次数">
-                        <el-input-number v-model="data.positionParams.pyramiding" :min="0" style="width: 100%;" />
                       </el-form-item>
                     </el-col>
                   </el-row>
@@ -264,14 +240,18 @@
               </transition>
             </div>
             <!-- 按钮区域 -->
-            <el-form-item>
+            <div class="button-group">
               <el-button size="default" type="primary" @click="onSearch()" style="width: 100%;">
                 <el-icon>
                   <Search />
                 </el-icon>
                 查询
               </el-button>
-            </el-form-item>
+              <el-button size="default" type="success" @click="handleSaveStrategy()" style="width: 100%;margin-left: 0;margin-top: 10px;">
+                <el-icon><DocumentAdd /></el-icon>
+                保存策略
+              </el-button>
+            </div>
           </el-form>
         </el-card>
       </el-col>
@@ -285,7 +265,6 @@
                 style="width: 100%">
                 <!-- 核心策略信息 -->
                 <el-table-column prop="strategyName" label="策略名称" align="center"></el-table-column>
-
                 <!-- 收益指标 -->
                 <el-table-column prop="totalRate" label="总收益率" align="center">
                   <template #default="scope">
@@ -345,16 +324,24 @@
 </template>
 
 <script setup lang="ts">
-import DateUtils from '@/utils/DateUtils'
-import { nextTick, ref, onMounted, reactive, onUnmounted } from 'vue'
+import { nextTick, ref, onMounted, reactive, isReactive, onUnmounted, watch, computed } from 'vue'
 import quantApi from '@/api/quantApi'
-import { ElMessage, makeInstaller } from 'element-plus';
-import ProfitLineChart from '@/components/pc/Charts/ProfitLineChart.vue'
-import AnnualIncomeChart from '@/components/pc/Charts/AnnualIncomeChart.vue'
+import { ElMessage } from 'element-plus';
+import {
+  RefreshRight
+} from '@element-plus/icons-vue'
 import useStrategyParams from '@/composables/useStrategyParams';
 import useTradingParams from '@/composables/useTradingParams';
 import useRiskManagementParams from '@/composables/useRiskManagementParams';
 import usePositionManagementParams from '@/composables/usePositionManagementParams';
+import useBackTestingParams from '@/composables/useBackTestingParams';
+// 动态
+const { strategyParams, setStrategyByType, getStrategyParamsObj, resetToDefault } = useStrategyParams()
+// 静态
+const { tradingParams } = useTradingParams()
+const { riskParams } = useRiskManagementParams()
+const { positionParams } = usePositionManagementParams()
+const { backTestingParams } = useBackTestingParams()
 /**
  * 指数选项
  */
@@ -381,7 +368,6 @@ interface MaData {
 interface ProfitData {
   value: number
 }
-
 /**
  * 指数数据项
  */
@@ -433,11 +419,6 @@ interface TradeStatsData {
   annualProfitList: Array<AnnualProfit>,
   dailyProfitList: Array<ProfitData>
 }
-// 组合使用
-const { strategyParams } = useStrategyParams()
-const { tradingParams } = useTradingParams()
-const { riskParams } = useRiskManagementParams()
-const { positionParams } = usePositionManagementParams()
 
 const data = reactive({
   loading: true,
@@ -450,30 +431,22 @@ const data = reactive({
   // 基本设置
   instruments: 'stocks', // TODO：表单-标的类型(stocks、futures)
   currentIndex: {} as IndexOption, // 表单-标的
+  // 策略参数
   strategyId: '', // 表单-策略ID（回显）
   strategyName: 'ma_strategy', // 表单-策略名称（选择回显）
-  strategyType: '', // 表单-策略类型(回显)
+  strategyType: 'ma_strategy', // 表单-策略类型(回显)
+  strategyTimeFrame: 'daily', // TODO:表单-时间框架/策略运行频率
   startDate: null as (string | null), // 表单-回测开始时间
   endDate: null as (string | null), // 表单-回测结束时间
-  timeFrame: 'daily', // TODO:表单-时间框架/策略运行频率
   initialCapitalInput: 10000, // TODO:表单-初始资金，100万更符合实际回测需求
   dataSource: 'tushare', // TODO:表单-数据源
-  performanceAttribution: false, // TODO：是否进行业绩归因分析
-  // 模块化引入
+  // 模块化引入：策略信号参数、交易触发与执行参数、风险管理参数、仓位管理参数
   strategyParams,
+  strategyParamsObj: {},
   tradingParams,
   riskParams,
   positionParams,
-  // ====== 新增字段 START ======
-  // 6. 新增回测验证参数（先不考虑）
-  enableBacktestValidation: false, // TODO：是否启用回测验证
-  inSampleRatio: 0.7, // TODO：样本内数据比例70%
-  outSampleRatio: 0.3, // TODO：样本外数据比例30%
-  rollingWindow: 252, // TODO：滚动窗口252个交易日(1年)
-  lookAheadCheck: true, // TODO：检查前瞻偏差
-  survivorshipBiasAdjustment: true, // TODO：幸存者偏差调整
-  benchmarkComparison: true, // TODO：与基准对比
-  benchmark: '000300.SH', // TODO：表单-基准，设置默认基准为沪深300
+  backTestingParams, // 新增回测验证参数（先不考虑）
   // 2. 回测区域
   // 数据源（指数+均线+本身收益数据（3个api数组，4个计算）
   maDatas: [] as MaData[], // api某指数均线数据, 明确类型
@@ -493,10 +466,52 @@ const data = reactive({
   multiTradeAnnualProfits: [] as AnnualProfit[], // 计算的年收益数组收益（可多个策略）, 明确类型
 })
 
-onMounted(async () => {
-  await initData(); // 等待数据加载完成
+// 计算属性：将参数按每两个一组分行
+const paramRows = computed(() => {
+  const rows = []
+  for (let i = 0; i < strategyParams.length; i += 2) {
+    rows.push({
+      key: `row-${i}`,
+      params: strategyParams.slice(i, i + 2)
+    })
+  }
+  return rows
 })
-async function initData() {
+// 计算属性：获取占位符文本
+const getPlaceholder = (param: any) => {
+  if (param.key.includes('Period') || param.key.includes('period')) {
+    return '请输入周期'
+  }
+  if (param.key.includes('Input')) {
+    return `例如：${param.value}`
+  }
+  return `请输入${param.label}`
+}
+watch(() => data.strategyType, (newVal) => {
+  console.log('[watch]strategyType', newVal)
+  if (newVal) {
+    setStrategyByType(newVal)
+  } else {
+    // 默认值或提示未找到该策略配置
+    console.warn('未知策略类型:', newVal)
+  }
+})
+watch(
+  () => strategyParams,
+  () => {
+    console.log('[watch]strategyParams', strategyParams)
+    data.strategyParamsObj = getStrategyParamsObj()
+    console.log('strategyParamsObj', data.strategyParamsObj)
+  },
+  { deep: true }
+)
+onMounted(async () => {
+  await getCodesList(); // 等待数据加载完成
+  await nextTick(); // 确保响应式属性已建立
+  data.strategyParamsObj = getStrategyParamsObj();
+  onSearch() // 初始加载时执行一次查询
+})
+async function getCodesList() {
   try {
     const response = await quantApi.getIndexes({})
     if (response.code === 200) {
@@ -504,7 +519,6 @@ async function initData() {
       data.indexes = response.data;
       if (data.indexes.length > 0) {
         data.currentIndex = data.indexes[0];
-        onSearch() // 初始加载时执行一次查询
       }
     } else {
       ElMessage.error('获取指数列表失败！');
@@ -516,20 +530,27 @@ async function initData() {
     data.loading = false; // 无论成功失败，结束loading状态
   }
 }
-const handleTabChange = () => {
-  setTimeout(() => {
-    window.dispatchEvent(new Event('resize'));
-  }, 50);
-};
+// 重置策略参数按钮
+const handleResetStrategyParams = () => {
+  resetToDefault()
+  data.strategyParamsObj = getStrategyParamsObj()
+  ElMessage.success('已重置为默认值')
+  console.log(data.strategyParamsObj)
+}
+const handleSaveStrategy = () => {
+  console.log('save')
+}
+// 回测
 const simulate = async () => {
   try {
     data.isSimulateLoading = true;
     console.log('选中的标的', data.currentIndex)
+    console.log('策略参数', data.strategyParamsObj)
     const params = {
-      strategy: 'ma_strategy',
+      strategy: data.strategyType,
       code: data.currentIndex.code,
       market: data.currentIndex.market,
-      ma: Number(data.strategyParams.ma), // 确保是数字
+      ma: Number(data.strategyParamsObj.ma), // 确保是数字
       buyThreshold: Number(data.tradingParams.buyThreshold), // 确保是数字
       sellThreshold: Number(data.tradingParams.sellThreshold), // 确保是数字
       serviceCharge: Number(data.tradingParams.serviceCharge), // 确保是数字
@@ -577,11 +598,7 @@ const simulate = async () => {
     data.isSimulateLoading = false;
   }
 };
-
-// function clearIndexCommonData() { // 似乎未使用，可以考虑移除
-//   data.index_info = {}
-// }
-
+// 回测参数校验
 const onSearch = () => {
   // 可以在这里添加表单校验逻辑
   if (!data.currentIndex) {
@@ -591,6 +608,12 @@ const onSearch = () => {
   // 其他参数校验...
   simulate();
 }
+// 回测图表区
+const handleTabChange = () => {
+  setTimeout(() => {
+    window.dispatchEvent(new Event('resize'));
+  }, 50);
+};
 </script>
 <style scoped lang="scss">
 .backtest-view-container {
@@ -605,6 +628,11 @@ const onSearch = () => {
   height: 100%;
 }
 
+//TIPS：修复el-input-number输入框内数字遮挡的问题
+::v-deep .el-input-number .el-input__inner {
+  padding-left: 20px !important;
+  padding-right: 20px !important;
+}
 .config-panel-card,
 .results-panel-card {
   height: 100%;
@@ -621,13 +649,6 @@ const onSearch = () => {
     padding: 15px;
   }
 }
-
-//TIPS：修复el-input-number输入框内数字遮挡的问题
-::v-deep .el-input-number .el-input__inner {
-  padding-left: 20px !important;
-  padding-right: 20px !important;
-}
-
 .config-panel-card {
   ::v-deep(.el-form-item) {
     margin-bottom: 12px;
@@ -665,20 +686,11 @@ const onSearch = () => {
     }
   }
 }
-
-.slide-enter-active,
-.slide-leave-active {
-  transition: all 0.3s ease;
-  max-height: 200px;
-  /* 控制最大高度 */
-  overflow: hidden;
-}
-
-.slide-enter-from,
-.slide-leave-to {
-  opacity: 0;
-  transform: translateY(-10px);
-  max-height: 0;
+.button-group {
+  display: flex;
+  justify-items: center;
+  align-items: center;
+  flex-direction: column;
 }
 
 .chart-container {
